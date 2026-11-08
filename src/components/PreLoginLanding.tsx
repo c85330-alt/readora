@@ -5,16 +5,12 @@ import { Lock, ArrowRight, ShieldCheck, BookOpen, Users, MapPin, Sparkles, Check
 interface PreLoginLandingProps {
   onOpenLogin: () => void;
   onOpenSignup: () => void;
-  onFastLoginAdmin: () => void;
-  onFastLoginMember: () => void;
   clubs: BookClub[];
 }
 
 export const PreLoginLanding: React.FC<PreLoginLandingProps> = ({
   onOpenLogin,
   onOpenSignup,
-  onFastLoginAdmin,
-  onFastLoginMember,
   clubs
 }) => {
   return (
@@ -32,15 +28,6 @@ export const PreLoginLanding: React.FC<PreLoginLandingProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <button
-              onClick={onFastLoginAdmin}
-              className="hidden lg:inline-flex items-center gap-1.5 text-xs font-medium text-[#2D6A4F] bg-[#E8F2E8] hover:bg-[#dbebdc] px-3 py-2 rounded-full transition-colors cursor-pointer"
-              title="관리자 계정 (chapter85330)으로 즉시 로그인"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>관리자 바로 접속</span>
-            </button>
-
             <button
               onClick={onOpenLogin}
               className="text-xs sm:text-sm font-semibold text-[#19221C] hover:text-[#DF612D] px-3.5 py-2 transition-colors cursor-pointer"
@@ -111,27 +98,6 @@ export const PreLoginLanding: React.FC<PreLoginLandingProps> = ({
                 <Mail className="w-4 h-4 text-emerald-400" />
                 <span>이메일 인증 회원가입</span>
               </button>
-            </div>
-
-            {/* Quick Demo Logins Box */}
-            <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-stone-600">
-              <span className="font-semibold text-stone-700">체험용 원클릭 로그인:</span>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={onFastLoginAdmin}
-                  className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-[#172E22] font-semibold text-[11px] border border-stone-200 transition-colors"
-                >
-                  👑 총괄 관리자 (chapter85330)
-                </button>
-                <button
-                  type="button"
-                  onClick={onFastLoginMember}
-                  className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#DF612D] font-semibold text-[11px] border border-orange-200 transition-colors"
-                >
-                  👤 일반회원 (calgary_reader)
-                </button>
-              </div>
             </div>
           </div>
         </section>

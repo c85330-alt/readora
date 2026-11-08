@@ -54,6 +54,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupGender, setSignupGender] = useState<'여성' | '남성' | '기타'>('여성');
+  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'available' | 'duplicate'>('idle');
+  const [idCheckMessage, setIdCheckMessage] = useState('');
 
   // Signup Email verification state
   const [signupVerificationCode, setSignupVerificationCode] = useState('');
@@ -141,26 +143,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // Quick fill demo buttons
-  const handleFillAdmin = () => {
-    setActiveTab('login');
-    setLoginId('chapter85330');
-    setLoginPassword('cksdn0315!');
-    setLoginError('');
-  };
-
-  const handleFillHost = () => {
-    setActiveTab('login');
-    setLoginId('calgary_host');
-    setLoginPassword('host1234!');
-    setLoginError('');
-  };
-
-  const handleFillDemoUser = () => {
-    setActiveTab('login');
-    setLoginId('calgary_reader');
-    setLoginPassword('reader1234!');
-    setLoginError('');
+  // Check ID duplication
+  const handleCheckIdDuplicate = () => {
+    setSignupError('');
+    const trimmed = signupId.trim();
+    if (!trimmed) {
+      setIdCheckStatus('duplicate');
+      setIdCheckMessage('아이디를 입력해 주세요.');
+      return;
+    }
+    if (trimmed.length < 4) {
+      setIdCheckStatus('duplicate');
+      setIdCheckMessage('아이디는 최소 4자 이상이어야 합니다.');
+      return;
+    }
+    const isTaken = users.some((u) => u.username.toLowerCase() === trimmed.toLowerCase());
+    if (isTaken) {
+      setIdCheckStatus('duplicate');
+      setIdCheckMessage('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
+    } else {
+      setIdCheckStatus('available');
+      setIdCheckMessage('사용 가능한 아이디입니다.');
+    }
   };
 
   // Handle Login Submit
@@ -265,8 +269,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (signupPassword.length < 6) {
-      setSignupError('비밀번호는 최소 6자 이상이어야 합니다.');
+    if (idCheckStatus !== 'available') {
+      setSignupError('아이디 중복 확인을 완료해 주세요.');
+      return;
+    }
+
+    const pw = signupPassword;
+    const hasEnglish = /[a-zA-Z]/.test(pw);
+    const hasNumber = /[0-9]/.test(pw);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(pw);
+
+    if (pw.length < 8 || pw.length > 16 || !hasEnglish || !hasNumber || !hasSpecial) {
+      setSignupError('비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.');
       return;
     }
 
@@ -427,8 +441,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (newPassword.length < 6) {
-      setResetPwError('비밀번호는 최소 6자 이상이어야 합니다.');
+    const hasEnglish = /[a-zA-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
+
+    if (newPassword.length < 8 || newPassword.length > 16 || !hasEnglish || !hasNumber || !hasSpecial) {
+      setResetPwError('비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.');
       return;
     }
 
@@ -662,57 +680,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 로그인하기
               </button>
-
-              {/* Quick Fill Demo Helper */}
-              <div className="pt-3.5 border-t border-stone-200">
-                <p className="text-[11px] font-semibold text-stone-500 mb-2 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-[#DF612D]" />
-                  빠른 테스트용 계정 즉시 입력
-                </p>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={handleFillAdmin}
-                    className="p-1.5 sm:p-2.5 rounded-xl bg-[#172E22]/5 hover:bg-[#172E22]/10 border border-[#172E22]/15 text-left text-xs transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-[#172E22] flex items-center gap-1 text-[10px] sm:text-xs">
-                      <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#2D6A4F] shrink-0" />
-                      <span>관리자</span>
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] text-stone-500 font-mono mt-0.5 truncate">
-                      chapter85330
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleFillHost}
-                    className="p-1.5 sm:p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-left text-xs transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-amber-800 flex items-center gap-1 text-[10px] sm:text-xs">
-                      <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-600 shrink-0" />
-                      <span>호스트</span>
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] text-stone-500 font-mono mt-0.5 truncate">
-                      calgary_host
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleFillDemoUser}
-                    className="p-1.5 sm:p-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-left text-xs transition-colors cursor-pointer"
-                  >
-                    <div className="font-semibold text-[#DF612D] flex items-center gap-1 text-[10px] sm:text-xs">
-                      <UserIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                      <span>일반회원</span>
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] text-stone-500 font-mono mt-0.5 truncate">
-                      calgary_reader
-                    </div>
-                  </button>
-                </div>
-              </div>
             </form>
           )}
 
@@ -726,22 +693,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              {/* ID */}
+              {/* ID with Duplicate Check */}
               <div>
                 <label className="block text-xs font-semibold text-stone-700 mb-1">
                   아이디 (ID) <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={signupId}
-                  onChange={(e) => setSignupId(e.target.value)}
-                  placeholder="영문, 숫자 4자 이상"
-                  className="w-full px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={signupId}
+                    onChange={(e) => {
+                      setSignupId(e.target.value);
+                      setIdCheckStatus('idle');
+                      setIdCheckMessage('');
+                    }}
+                    placeholder="영문, 숫자 4자 이상"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckIdDuplicate}
+                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-semibold shrink-0 transition-colors cursor-pointer"
+                  >
+                    중복 확인
+                  </button>
+                </div>
+                {idCheckMessage && (
+                  <p className={`text-[11px] mt-1 font-medium ${idCheckStatus === 'available' ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {idCheckMessage}
+                  </p>
+                )}
               </div>
 
               {/* Password */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">
                     비밀번호 <span className="text-red-500">*</span>
@@ -750,7 +735,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
-                    placeholder="6자 이상"
+                    placeholder="8~16자 영문/숫자/특수문자"
                     className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
                   />
                 </div>
@@ -762,11 +747,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={signupPasswordConfirm}
                     onChange={(e) => setSignupPasswordConfirm(e.target.value)}
-                    placeholder="동일하게 입력"
+                    placeholder="동일하게 한 번 더 입력"
                     className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-stone-500">
+                비밀번호는 <strong>8~16자</strong>로 <strong>영문, 숫자, 특수문자</strong>를 반드시 모두 포함해야 합니다.
+              </p>
 
               {/* Name & Phone (Phone is MANDATORY) */}
               <div className="grid grid-cols-2 gap-2">

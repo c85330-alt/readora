@@ -36,56 +36,7 @@ import {
   Sliders
 } from 'lucide-react';
 
-export interface DailyPVRecord {
-  date: string; // YYYY-MM-DD
-  dateLabel: string; // MM.DD
-  fullDate: string; // YYYY년 MM월 DD일 (요일)
-  pv: number;
-  uv: number;
-  detailViews: number;
-  pps: number;
-  isToday?: boolean;
-  isWeekend?: boolean;
-}
-
-const INITIAL_DAILY_PV_RECORDS: DailyPVRecord[] = [
-  { date: '2026-10-01', dateLabel: '10.01', fullDate: '2026년 10월 01일 (목)', pv: 1120, uv: 710, detailViews: 350, pps: 3.1 },
-  { date: '2026-10-02', dateLabel: '10.02', fullDate: '2026년 10월 02일 (금)', pv: 1280, uv: 810, detailViews: 410, pps: 3.2 },
-  { date: '2026-10-03', dateLabel: '10.03', fullDate: '2026년 10월 03일 (토)', pv: 1650, uv: 1020, detailViews: 540, pps: 3.5, isWeekend: true },
-  { date: '2026-10-04', dateLabel: '10.04', fullDate: '2026년 10월 04일 (일)', pv: 1580, uv: 990, detailViews: 510, pps: 3.4, isWeekend: true },
-  { date: '2026-10-05', dateLabel: '10.05', fullDate: '2026년 10월 05일 (월)', pv: 1090, uv: 680, detailViews: 340, pps: 3.0 },
-  { date: '2026-10-06', dateLabel: '10.06', fullDate: '2026년 10월 06일 (화)', pv: 1150, uv: 720, detailViews: 370, pps: 3.1 },
-  { date: '2026-10-07', dateLabel: '10.07', fullDate: '2026년 10월 07일 (수)', pv: 1190, uv: 740, detailViews: 380, pps: 3.1 },
-  { date: '2026-10-08', dateLabel: '10.08', fullDate: '2026년 10월 08일 (목)', pv: 1210, uv: 755, detailViews: 390, pps: 3.1 },
-  { date: '2026-10-09', dateLabel: '10.09', fullDate: '2026년 10월 09일 (금)', pv: 1340, uv: 840, detailViews: 430, pps: 3.2 },
-  { date: '2026-10-10', dateLabel: '10.10', fullDate: '2026년 10월 10일 (토)', pv: 1720, uv: 1050, detailViews: 570, pps: 3.5, isWeekend: true },
-  { date: '2026-10-11', dateLabel: '10.11', fullDate: '2026년 10월 11일 (일)', pv: 1680, uv: 1030, detailViews: 550, pps: 3.4, isWeekend: true },
-  { date: '2026-10-12', dateLabel: '10.12', fullDate: '2026년 10월 12일 (월)', pv: 1130, uv: 705, detailViews: 360, pps: 3.0 },
-  { date: '2026-10-13', dateLabel: '10.13', fullDate: '2026년 10월 13일 (화)', pv: 1180, uv: 730, detailViews: 380, pps: 3.1 },
-  { date: '2026-10-14', dateLabel: '10.14', fullDate: '2026년 10월 14일 (수)', pv: 1220, uv: 760, detailViews: 390, pps: 3.1 },
-  { date: '2026-10-15', dateLabel: '10.15', fullDate: '2026년 10월 15일 (목)', pv: 1240, uv: 775, detailViews: 400, pps: 3.1 },
-  { date: '2026-10-16', dateLabel: '10.16', fullDate: '2026년 10월 16일 (금)', pv: 1390, uv: 870, detailViews: 450, pps: 3.2 },
-  { date: '2026-10-17', dateLabel: '10.17', fullDate: '2026년 10월 17일 (토)', pv: 1780, uv: 1090, detailViews: 590, pps: 3.6, isWeekend: true },
-  { date: '2026-10-18', dateLabel: '10.18', fullDate: '2026년 10월 18일 (일)', pv: 1710, uv: 1045, detailViews: 565, pps: 3.5, isWeekend: true },
-  { date: '2026-10-19', dateLabel: '10.19', fullDate: '2026년 10월 19일 (월)', pv: 1150, uv: 720, detailViews: 370, pps: 3.0 },
-  { date: '2026-10-20', dateLabel: '10.20', fullDate: '2026년 10월 20일 (화)', pv: 1205, uv: 750, detailViews: 385, pps: 3.1 },
-  { date: '2026-10-21', dateLabel: '10.21', fullDate: '2026년 10월 21일 (수)', pv: 1230, uv: 770, detailViews: 395, pps: 3.1 },
-  { date: '2026-10-22', dateLabel: '10.22', fullDate: '2026년 10월 22일 (목)', pv: 1250, uv: 785, detailViews: 405, pps: 3.2 },
-  { date: '2026-10-23', dateLabel: '10.23', fullDate: '2026년 10월 23일 (금)', pv: 1350, uv: 850, detailViews: 440, pps: 3.2 },
-  { date: '2026-10-24', dateLabel: '10.24', fullDate: '2026년 10월 24일 (토)', pv: 1810, uv: 1110, detailViews: 610, pps: 3.6, isWeekend: true },
-  { date: '2026-10-25', dateLabel: '10.25', fullDate: '2026년 10월 25일 (일)', pv: 1690, uv: 1030, detailViews: 560, pps: 3.5, isWeekend: true },
-  { date: '2026-10-26', dateLabel: '10.26', fullDate: '2026년 10월 26일 (월)', pv: 1080, uv: 675, detailViews: 345, pps: 3.0 },
-  { date: '2026-10-27', dateLabel: '10.27', fullDate: '2026년 10월 27일 (화)', pv: 1245, uv: 780, detailViews: 400, pps: 3.1 },
-  { date: '2026-10-28', dateLabel: '10.28', fullDate: '2026년 10월 28일 (수)', pv: 1190, uv: 745, detailViews: 380, pps: 3.1 },
-  { date: '2026-10-29', dateLabel: '10.29', fullDate: '2026년 10월 29일 (목)', pv: 1220, uv: 764, detailViews: 390, pps: 3.0 },
-  { date: '2026-10-30', dateLabel: '10.30', fullDate: '2026년 10월 30일 (금)', pv: 1410, uv: 880, detailViews: 460, pps: 3.2 },
-  { date: '2026-10-31', dateLabel: '10.31', fullDate: '2026년 10월 31일 (토)', pv: 1894, uv: 1152, detailViews: 640, pps: 3.6, isWeekend: true },
-  { date: '2026-11-01', dateLabel: '11.01', fullDate: '2026년 11월 01일 (일)', pv: 1742, uv: 1060, detailViews: 580, pps: 3.5, isWeekend: true },
-  { date: '2026-11-02', dateLabel: '11.02', fullDate: '2026년 11월 02일 (월)', pv: 1185, uv: 750, detailViews: 382, pps: 3.1 },
-  { date: '2026-11-03', dateLabel: '11.03', fullDate: '2026년 11월 03일 (화)', pv: 1317, uv: 814, detailViews: 420, pps: 3.2 },
-  { date: '2026-11-04', dateLabel: '11.04', fullDate: '2026년 11월 04일 (수)', pv: 1365, uv: 852, detailViews: 435, pps: 3.3 },
-  { date: '2026-11-05', dateLabel: '11.05', fullDate: '2026년 11월 05일 (오늘, 목)', pv: 1428, uv: 892, detailViews: 456, pps: 3.4, isToday: true }
-];
+import { DailyPVRecord, getRealDailyPVRecords } from '../utils/analytics';
 
 interface AdminDashboardProps {
   currentUser: User;
@@ -131,22 +82,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Analytics state & Date selection
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'daily' | 'monthly'>('daily');
   const [livePVBoost, setLivePVBoost] = useState(0);
-  const [dailyPVRecords] = useState<DailyPVRecord[]>(INITIAL_DAILY_PV_RECORDS);
-  const [chartStartDate, setChartStartDate] = useState('2026-10-30');
-  const [chartEndDate, setChartEndDate] = useState('2026-11-05');
+  const [dailyPVRecords, setDailyPVRecords] = useState<DailyPVRecord[]>(() => getRealDailyPVRecords());
+
+  const initialEndDate = dailyPVRecords[dailyPVRecords.length - 1]?.date || new Date().toISOString().slice(0, 10);
+  const initialStartDate = dailyPVRecords.length >= 7 
+    ? dailyPVRecords[dailyPVRecords.length - 7].date 
+    : (dailyPVRecords[0]?.date || initialEndDate);
+
+  const [chartStartDate, setChartStartDate] = useState(initialStartDate);
+  const [chartEndDate, setChartEndDate] = useState(initialEndDate);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
+
+  const handleRefreshAnalytics = () => {
+    setDailyPVRecords(getRealDailyPVRecords());
+  };
 
   // Filter records within chartStartDate and chartEndDate
   const filteredDailyRecords = dailyPVRecords.filter((r) => {
     return r.date >= chartStartDate && r.date <= chartEndDate;
   }).sort((a, b) => a.date.localeCompare(b.date));
 
-  const displayRecords = filteredDailyRecords.length > 0 ? filteredDailyRecords : dailyPVRecords.slice(-7);
+  const displayRecords = filteredDailyRecords.length > 0 ? filteredDailyRecords : dailyPVRecords;
   const totalFilteredPV = displayRecords.reduce((sum, r) => sum + r.pv, 0) + (displayRecords.some(r => r.isToday) ? livePVBoost : 0);
-  const avgFilteredPV = Math.round(totalFilteredPV / displayRecords.length);
-  const maxFilteredPV = Math.max(...displayRecords.map(r => r.pv + (r.isToday ? livePVBoost : 0)));
-  const todayRecord = dailyPVRecords.find(r => r.isToday) || dailyPVRecords[dailyPVRecords.length - 1];
+  const avgFilteredPV = Math.round(totalFilteredPV / Math.max(1, displayRecords.length));
+  const maxFilteredPV = Math.max(1, ...displayRecords.map(r => r.pv + (r.isToday ? livePVBoost : 0)));
+  const todayRecord = dailyPVRecords.find(r => r.isToday) || dailyPVRecords[dailyPVRecords.length - 1] || {
+    date: new Date().toISOString().slice(0, 10),
+    dateLabel: '오늘',
+    fullDate: '오늘',
+    pv: 1,
+    uv: 1,
+    detailViews: 0,
+    pps: 1.0,
+    isToday: true
+  };
   const todayPVDisplay = todayRecord.pv + livePVBoost;
+
+  // Real Monthly Aggregations
+  const monthlyStats = React.useMemo(() => {
+    const map = new Map<string, { pv: number; uv: number; detailViews: number }>();
+    dailyPVRecords.forEach((r) => {
+      const monthKey = r.date.slice(0, 7);
+      const prev = map.get(monthKey) || { pv: 0, uv: 0, detailViews: 0 };
+      map.set(monthKey, {
+        pv: prev.pv + r.pv,
+        uv: prev.uv + r.uv,
+        detailViews: prev.detailViews + r.detailViews
+      });
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([mKey, data]) => {
+        const [y, m] = mKey.split('-');
+        const isCurrentMonth = mKey === new Date().toISOString().slice(0, 7);
+        const pps = Number((data.pv / Math.max(1, data.uv)).toFixed(1));
+        return {
+          date: `${y}년 ${parseInt(m, 10)}월${isCurrentMonth ? ' (실시간 집계)' : ''}`,
+          pv: data.pv + (isCurrentMonth ? livePVBoost : 0),
+          uv: data.uv,
+          detailViews: data.detailViews,
+          pps,
+          growth: '실시간 집계',
+          isUp: true
+        };
+      });
+  }, [dailyPVRecords, livePVBoost]);
+
+  const currentMonthRecord = monthlyStats[0] || { pv: todayPVDisplay, uv: todayRecord.uv };
+  const currentMonthPV = currentMonthRecord.pv;
+  const currentMonthUV = currentMonthRecord.uv;
+  const totalDetailViews = displayRecords.reduce((sum, r) => sum + r.detailViews, 0);
 
   // Member Search & Filter
   const [memberSearch, setMemberSearch] = useState('');
@@ -882,7 +887,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <button
-                  onClick={() => setLivePVBoost((prev) => prev + Math.floor(Math.random() * 5 + 3))}
+                  onClick={handleRefreshAnalytics}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition-colors cursor-pointer"
                   title="실시간 페이지뷰 갱신"
                 >
@@ -907,12 +912,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                   <span className="text-stone-500">오늘 순방문자(UV)</span>
-                  <span className="font-bold text-[#19221C]">{(Math.round(todayPVDisplay * 0.62)).toLocaleString()}명</span>
+                  <span className="font-bold text-[#19221C]">{todayRecord.uv.toLocaleString()}명</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">전일(1,317회) 대비</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> +8.4% 상승
+                  <span className="text-stone-500">모임 상세 조회</span>
+                  <span className="text-stone-700 font-bold">
+                    {todayRecord.detailViews.toLocaleString()}회
                   </span>
                 </div>
               </div>
@@ -950,44 +955,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {avgFilteredPV.toLocaleString()} <span className="text-base font-semibold text-stone-500">회/일</span>
                 </div>
                 <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">주말 일평균 PV</span>
-                  <span className="font-bold text-[#DF612D]">
-                    {Math.round(
-                      (displayRecords.filter((r) => r.isWeekend).reduce((s, r) => s + r.pv, 0) || 1680) /
-                        Math.max(displayRecords.filter((r) => r.isWeekend).length, 1)
-                    ).toLocaleString()}회/일
-                  </span>
+                  <span className="text-stone-500">세션당 페이지수 (PPS)</span>
+                  <span className="font-bold text-[#DF612D]">{todayRecord.pps} 페이지</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">평일 일평균 PV</span>
-                  <span className="font-bold text-[#19221C]">
-                    {Math.round(
-                      (displayRecords.filter((r) => !r.isWeekend).reduce((s, r) => s + r.pv, 0) || 1120) /
-                        Math.max(displayRecords.filter((r) => !r.isWeekend).length, 1)
-                    ).toLocaleString()}회/일
-                  </span>
+                  <span className="text-stone-500">모임 상세 총 조회</span>
+                  <span className="font-bold text-[#19221C]">{totalDetailViews.toLocaleString()}회</span>
                 </div>
               </div>
 
               {/* Metric 4: 월간 누적 페이지뷰 */}
               <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">월간 페이지뷰 (11월 누적)</span>
+                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">월간 페이지뷰 (이번 달 누적)</span>
                   <div className="w-9 h-9 rounded-2xl bg-orange-50 text-[#DF612D] flex items-center justify-center font-bold">
                     <Calendar className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="text-3xl font-extrabold text-[#19221C]">
-                  {(38420 + livePVBoost).toLocaleString()} <span className="text-base font-semibold text-stone-500">회</span>
+                  {currentMonthPV.toLocaleString()} <span className="text-base font-semibold text-stone-500">회</span>
                 </div>
                 <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                   <span className="text-stone-500">월간 누적 순방문자</span>
-                  <span className="font-bold text-[#19221C]">24,190명</span>
+                  <span className="font-bold text-[#19221C]">{currentMonthUV.toLocaleString()}명</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">전월 동기 대비</span>
+                  <span className="text-stone-500">실시간 데이터 수집</span>
                   <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                    <TrendingUp className="w-3.5 h-3.5" /> +15.2% 성장
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 정상 가동 중
                   </span>
                 </div>
               </div>
@@ -1010,20 +1005,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs text-stone-500 font-medium mr-1">빠른 선택:</span>
                   {[
-                    { label: '최근 7일', start: '2026-10-30', end: '2026-11-05' },
-                    { label: '최근 14일', start: '2026-10-23', end: '2026-11-05' },
-                    { label: '최근 30일', start: '2026-10-07', end: '2026-11-05' },
-                    { label: '11월 전체', start: '2026-11-01', end: '2026-11-05' },
-                    { label: '10월 전체', start: '2026-10-01', end: '2026-10-31' },
+                    { label: '최근 7일', days: 7 },
+                    { label: '최근 14일', days: 14 },
+                    { label: '최근 30일', days: 30 },
+                    { label: '이번 달', isCurrentMonth: true }
                   ].map((preset) => {
-                    const isActive = chartStartDate === preset.start && chartEndDate === preset.end;
+                    const getPresetRange = () => {
+                      const endD = new Date();
+                      if (preset.isCurrentMonth) {
+                        const startD = new Date(endD.getFullYear(), endD.getMonth(), 1);
+                        return { start: startD.toISOString().slice(0, 10), end: endD.toISOString().slice(0, 10) };
+                      }
+                      const startD = new Date();
+                      startD.setDate(endD.getDate() - (preset.days || 7));
+                      return { start: startD.toISOString().slice(0, 10), end: endD.toISOString().slice(0, 10) };
+                    };
+                    const range = getPresetRange();
+                    const isActive = chartStartDate === range.start && chartEndDate === range.end;
                     return (
                       <button
                         key={preset.label}
                         type="button"
                         onClick={() => {
-                          setChartStartDate(preset.start);
-                          setChartEndDate(preset.end);
+                          setChartStartDate(range.start);
+                          setChartEndDate(range.end);
                         }}
                         className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                           isActive
@@ -1119,9 +1124,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 const rawMax = Math.max(
                   ...displayRecords.map((r) => r.pv + (r.isToday ? livePVBoost : 0)),
-                  1200
+                  5
                 );
-                const yMax = Math.ceil(rawMax / 500) * 500;
+                const step = rawMax <= 20 ? 5 : rawMax <= 100 ? 20 : rawMax <= 500 ? 100 : 500;
+                const yMax = Math.max(step * 2, Math.ceil(rawMax / step) * step);
 
                 const points = displayRecords.map((r, i) => {
                   const effectivePV = r.pv + (r.isToday ? livePVBoost : 0);
@@ -1344,17 +1350,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="p-6 border-b border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-base text-[#19221C]">
-                    {analyticsPeriod === 'daily' ? '일자별 일간 페이지뷰 상세 내역' : '월별 페이지뷰 및 성장 추이'}
+                    {analyticsPeriod === 'daily' ? '일자별 일간 페이지뷰 상세 내역' : '월별 페이지뷰 및 방문 집계'}
                   </h3>
                   <p className="text-xs text-stone-500 mt-0.5">
                     {analyticsPeriod === 'daily'
                       ? `선택 기간(${chartStartDate} ~ ${chartEndDate}, 총 ${displayRecords.length}일)의 페이지뷰 및 방문자 데이터입니다.`
-                      : '최근 5개월간의 월별 총 페이지뷰 및 전월 대비 성장률'}
+                      : '월별 누적 페이지뷰 및 순방문자 데이터 집계'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-3 py-1 rounded-full bg-[#F4F0E5] font-semibold text-stone-700">
-                    {analyticsPeriod === 'daily' ? `${displayRecords.length}일 데이터` : '2026 하반기 집계'}
+                    {analyticsPeriod === 'daily' ? `${displayRecords.length}일 데이터` : `${monthlyStats.length}개 월 집계`}
                   </span>
                 </div>
               </div>
@@ -1428,13 +1434,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           );
                         })
                     ) : (
-                      [
-                        { date: '2026년 11월 (진행중)', pv: 38420 + livePVBoost, uv: 24190, detailViews: 12450, pps: 3.3, growth: '+15.2%', isUp: true },
-                        { date: '2026년 10월', pv: 41200, uv: 26450, detailViews: 13180, pps: 3.2, growth: '+15.1%', isUp: true },
-                        { date: '2026년 09월', pv: 35800, uv: 22300, detailViews: 11400, pps: 3.1, growth: '+13.7%', isUp: true },
-                        { date: '2026년 08월', pv: 31500, uv: 19800, detailViews: 9980, pps: 3.0, growth: '+22.1%', isUp: true },
-                        { date: '2026년 07월', pv: 25800, uv: 16200, detailViews: 8120, pps: 2.9, growth: '기준월', isUp: false }
-                      ].map((row, idx) => (
+                      monthlyStats.map((row, idx) => (
                         <tr key={idx} className="hover:bg-stone-50/80 transition-colors">
                           <td className="py-4 px-6 font-bold text-[#19221C]">{row.date}</td>
                           <td className="py-4 px-6 font-bold text-[#19221C]">{row.pv.toLocaleString()}회</td>
@@ -1442,8 +1442,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <td className="py-4 px-6 text-stone-600">{row.detailViews.toLocaleString()}회</td>
                           <td className="py-4 px-6 text-stone-600">{row.pps}페이지</td>
                           <td className="py-4 px-6 text-right">
-                            <span className={`inline-flex items-center gap-0.5 font-bold ${row.isUp ? 'text-emerald-600' : 'text-stone-500'}`}>
-                              {row.isUp && <TrendingUp className="w-3 h-3" />}
+                            <span className="inline-flex items-center gap-0.5 font-bold text-emerald-600">
+                              <CheckCircle2 className="w-3 h-3" />
                               {row.growth}
                             </span>
                           </td>
@@ -1464,26 +1464,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <PieChart className="w-4 h-4 text-[#2D6A4F]" />
                     <span>주요 페이지별 PV 점유율</span>
                   </h3>
-                  <span className="text-xs text-stone-500">11월 기준</span>
+                  <span className="text-xs text-stone-500">실시간 데이터</span>
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  {[
-                    { name: '모임 둘러보기 및 홈 (Explore & Home)', share: 48, pv: 18441, color: 'bg-[#172E22]' },
-                    { name: '모임 상세 안내 및 도서 정보 (Club Detail)', share: 32, pv: 12294, color: 'bg-[#DF612D]' },
-                    { name: '참가 신청서 작성 및 결제창 (RSVP & Pay)', share: 12, pv: 4610, color: 'bg-emerald-600' },
-                    { name: '마이페이지 및 회원 관리 (MyPage & Profile)', share: 8, pv: 3075, color: 'bg-blue-600' }
-                  ].map((p, i) => (
-                    <div key={i} className="space-y-1">
-                      <div className="flex justify-between font-medium">
-                        <span className="text-[#19221C]">{p.name}</span>
-                        <span className="font-bold text-stone-800">{p.share}% ({p.pv.toLocaleString()} PV)</span>
+                  {(() => {
+                    const totalPV = Math.max(1, totalFilteredPV);
+                    const detailPV = totalDetailViews;
+                    const homePV = Math.max(0, totalPV - detailPV);
+                    const homeShare = Math.round((homePV / totalPV) * 100);
+                    const detailShare = 100 - homeShare;
+                    const breakdown = [
+                      { name: '홈 및 모임 둘러보기 (Explore & Home)', share: homeShare, pv: homePV, color: 'bg-[#172E22]' },
+                      { name: '모임 상세 및 도서 정보 (Club Detail)', share: detailShare, pv: detailPV, color: 'bg-[#DF612D]' }
+                    ];
+
+                    return breakdown.map((p, i) => (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between font-medium">
+                          <span className="text-[#19221C]">{p.name}</span>
+                          <span className="font-bold text-stone-800">{p.share}% ({p.pv.toLocaleString()} PV)</span>
+                        </div>
+                        <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${p.color} rounded-full`} style={{ width: `${Math.max(2, p.share)}%` }} />
+                        </div>
                       </div>
-                      <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${p.color} rounded-full`} style={{ width: `${p.share}%` }} />
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
 
@@ -1496,7 +1503,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </h3>
                   <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    실시간 14명 접속 중
+                    실시간 접속 집계 정상
                   </span>
                 </div>
 
@@ -1507,22 +1514,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <span>저녁 독서 골든타임 (19:00 ~ 23:00)</span>
                     </div>
                     <p className="text-stone-600 leading-relaxed text-[11px]">
-                      하루 중 전체 페이지뷰의 <strong>45%</strong>가 저녁 7시부터 11시 사이에 발생하며, 이 시간대에 모임 신청 전환율이 가장 높습니다.
+                      독서 모임 탐색 및 신청은 주로 퇴근 및 일과 후 저녁 시간대에 집중되며, 방문자 유입이 실시간으로 안전하게 기록되고 있습니다.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                     <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[11px] text-stone-500 block">모바일 접속</span>
-                      <strong className="text-sm font-bold text-[#19221C]">68%</strong>
+                      <strong className="text-sm font-bold text-[#19221C]">반응형 지원</strong>
                     </div>
                     <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
                       <span className="text-[11px] text-stone-500 block">PC 웹 접속</span>
-                      <strong className="text-sm font-bold text-[#19221C]">28%</strong>
+                      <strong className="text-sm font-bold text-[#19221C]">데스크톱 최적화</strong>
                     </div>
                     <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[11px] text-stone-500 block">태블릿 접속</span>
-                      <strong className="text-sm font-bold text-[#19221C]">4%</strong>
+                      <span className="text-[11px] text-stone-500 block">데이터 보관</span>
+                      <strong className="text-sm font-bold text-[#19221C]">실시간 영구 집계</strong>
                     </div>
                   </div>
                 </div>

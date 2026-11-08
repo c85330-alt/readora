@@ -60,7 +60,7 @@ export interface BookClub {
 
 export interface User {
   id: string;
-  username: string; // ID used for login (e.g. chapter85330, calgary_host, calgary_reader)
+  username: string; // ID used for login (e.g. readoraadmin)
   password?: string;
   name: string;
   email: string;

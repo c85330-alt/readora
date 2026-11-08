@@ -26,12 +26,38 @@ import {
   checkAndExecuteAutoCancellations, 
   simulateAutoCancelClub 
 } from './utils/autoCancelClubs';
+import { trackRealPageView } from './utils/analytics';
 import { Crown } from 'lucide-react';
 
-const STORAGE_KEY_CLUBS = 'chapter_calgary_clubs_v3';
-const STORAGE_KEY_RSVPS = 'chapter_calgary_rsvps_v3';
-const STORAGE_KEY_USERS = 'chapter_calgary_users_v3';
-const STORAGE_KEY_CURRENT_USER = 'chapter_calgary_session_user_v3';
+const STORAGE_KEY_CLUBS = 'readora_prod_clubs_v1';
+const STORAGE_KEY_RSVPS = 'readora_prod_rsvps_v1';
+const STORAGE_KEY_USERS = 'readora_prod_users_v1';
+const STORAGE_KEY_CURRENT_USER = 'readora_prod_session_user_v1';
+
+// One-time purge of legacy test storage keys
+if (typeof window !== 'undefined') {
+  const LEGACY_STORAGE_KEYS = [
+    'chapter_calgary_clubs_v3',
+    'chapter_calgary_rsvps_v3',
+    'chapter_calgary_users_v3',
+    'chapter_calgary_session_user_v3',
+    'chapter_calgary_clubs_v2',
+    'chapter_calgary_rsvps_v2',
+    'chapter_calgary_users_v2',
+    'chapter_calgary_session_user_v2',
+    'chapter_calgary_clubs_v1',
+    'chapter_calgary_rsvps_v1',
+    'chapter_calgary_users_v1',
+    'chapter_calgary_session_user_v1'
+  ];
+  LEGACY_STORAGE_KEYS.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      // ignore
+    }
+  });
+}
 
 export default function App() {
   // Users state
@@ -39,12 +65,7 @@ export default function App() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_USERS);
       if (saved) {
-        const parsed: User[] = JSON.parse(saved);
-        if (!parsed.some((u) => u.username === 'calgary_host')) {
-          const hostUser = INITIAL_USERS.find((u) => u.username === 'calgary_host');
-          if (hostUser) return [hostUser, ...parsed];
-        }
-        return parsed;
+        return JSON.parse(saved);
       }
     } catch (e) {
       console.error(e);
@@ -78,16 +99,7 @@ export default function App() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_CLUBS);
       if (saved) {
-        const parsed: BookClub[] = JSON.parse(saved);
-        return parsed.map((c) => {
-          if (c.id === 'club-2' && !c.hostUserId) {
-            return { ...c, hostUserId: 'user-host-1', hostName: '정세라 (호스트)' };
-          }
-          if (c.id === 'club-1' && !c.hostUserId) {
-            return { ...c, hostUserId: 'user-admin-1' };
-          }
-          return c;
-        });
+        return JSON.parse(saved);
       }
     } catch (e) {
       console.error(e);
@@ -177,8 +189,9 @@ export default function App() {
     }
   };
 
-  // Initial check on mount
+  // Initial check and analytics track on mount
   useEffect(() => {
+    trackRealPageView();
     handleRunAutoCancellationCheck(false);
   }, []);
 
@@ -748,6 +761,7 @@ export default function App() {
             showToast('🔒 독서모임 상세 정보 확인 및 모임 신청은 로그인 후 이용하실 수 있습니다.');
             return;
           }
+          trackRealPageView(true);
           setSelectedClubForModal(club);
         }}
         onOpenCreateClub={() => {
