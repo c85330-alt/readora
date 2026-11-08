@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Fraunces', Georgia, serif;
+  }
+
+  /* Universal text wrapping rules */
+  *, ::before, ::after {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  html, body {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    font-family: var(--font-sans);
+    background-color: #F4F0E5;
+    color: #1A211D;
+  }
+
+  /* Headings: Balance lines for visual harmony */
+  h1, h2, h3, h4, h5, h6 {
+    word-break: keep-all;
+    text-wrap: balance;
+  }
+
+  /* Paragraphs and list items: Pretty wrapping to prevent orphan words */
+  p, li, dd, dt, blockquote, label {
+    word-break: keep-all;
+    text-wrap: pretty;
+  }
+}
+
+/* Hanging Indent for Bullet Points and Lists (Text aligns under text, not under bullet) */
+.hanging-indent {
+  padding-left: 1.25rem;
+  text-indent: -1.25rem;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+.hanging-indent-sm {
+  padding-left: 1rem;
+  text-indent: -1rem;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+.hanging-indent-lg {
+  padding-left: 1.5rem;
+  text-indent: -1.5rem;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+/* Flexbox-based Bullet Item: Marker stays fixed, text wraps with clean indentation */
+.bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  word-break: keep-all;
+  text-wrap: pretty;
+  width: 100%;
+}
+
+.bullet-marker {
+  flex-shrink: 0;
+  user-select: none;
+  line-height: inherit;
+  font-weight: bold;
+}
+
+.bullet-text {
+  flex: 1;
+  min-width: 0;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+/* Numbered List Item: Digits stay fixed, subsequent lines align perfectly */
+.number-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  word-break: keep-all;
+  text-wrap: pretty;
+  width: 100%;
+}
+
+.number-marker {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+}
+
+.number-text {
+  flex: 1;
+  min-width: 0;
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+/* Responsive punctuation-first balanced wrapping utilities */
+.balanced-text {
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+.pretty-text {
+  text-wrap: pretty;
+  word-break: keep-all;
+}
+
+.font-serif-accent {
+  font-family: var(--font-serif);
+}
+
+/* Custom curved highlight decoration */
+.sketch-highlight {
+  position: relative;
+  display: inline-block;
+}
+
+.sketch-highlight::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 2px;
+  height: 6px;
+  background-color: currentColor;
+  opacity: 0.22;
+  border-radius: 9999px;
+  z-index: -1;
+  transform: rotate(-0.5deg);
+}
+
+/* Hide scrollbar for smooth horizontal touch navigation */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

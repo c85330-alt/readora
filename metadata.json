@@ -1,0 +1,6 @@
+{
+  "name": "Chapter - 캘거리 한인 독서모임 플랫폼",
+  "description": "캐나다 캘거리 한인들을 위한 독서모임 커뮤니티 플랫폼. A new chapter begins with a book.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
