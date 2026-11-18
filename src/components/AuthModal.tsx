@@ -17,6 +17,15 @@ import {
   Crown
 } from 'lucide-react';
 import { User } from '../types';
+import {
+  SIGNUP_OTP_EXPIRY_SECONDS,
+  SIGNUP_RESEND_COOLDOWN_SECONDS,
+  SupabaseProfile,
+  checkUsernameAvailability,
+  resendSignupOtp,
+  signUpWithEmailOtp,
+  verifySignupOtpAndFetchProfile,
+} from '../lib/supabaseSignup';
 
 export type AuthMode = 'login' | 'signup' | 'find_id' | 'reset_password';
 
@@ -35,7 +44,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onLoginSuccess,
   users,
-  onRegisterUser,
+  onRegisterUser: _onRegisterUser,
   onResetPassword,
   initialTab = 'login'
 }) => {
@@ -54,20 +63,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupGender, setSignupGender] = useState<'여성' | '남성' | '기타'>('여성');
-  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'available' | 'duplicate'>('idle');
+  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'checking' | 'available' | 'duplicate' | 'error'>('idle');
   const [idCheckMessage, setIdCheckMessage] = useState('');
+  const [checkedUsername, setCheckedUsername] = useState('');
 
-  // Signup Email verification state
-  const [signupVerificationCode, setSignupVerificationCode] = useState('');
+  // Signup Email OTP verification state (Supabase Auth)
   const [signupInputCode, setSignupInputCode] = useState('');
   const [isSignupCodeSent, setIsSignupCodeSent] = useState(false);
   const [isSignupEmailVerified, setIsSignupEmailVerified] = useState(false);
+  const [isVerifyingSignupOtp, setIsVerifyingSignupOtp] = useState(false);
   const [signupVerificationError, setSignupVerificationError] = useState('');
-  const [signupCountdown, setSignupCountdown] = useState(180); // 3 minutes
+  const [signupOtpExpiresAt, setSignupOtpExpiresAt] = useState<number | null>(null);
+  const [signupResendAvailableAt, setSignupResendAvailableAt] = useState<number | null>(null);
+  const [signupCountdown, setSignupCountdown] = useState(SIGNUP_OTP_EXPIRY_SECONDS); // 10 minutes (600s)
+  const [signupResendCooldown, setSignupResendCooldown] = useState(0);
   const [signupError, setSignupError] = useState('');
+  const [signupNotice, setSignupNotice] = useState<{ email: string; message: string } | null>(null);
+  const [completedSignupProfile, setCompletedSignupProfile] = useState<SupabaseProfile | null>(null);
 
-  // Simulated Incoming Email Banner state
-  const [emailAlert, setEmailAlert] = useState<{ title: string; code: string; email: string } | null>(null);
+  // Real Email Verification state (for Find ID / Reset Password)
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailAlert, setEmailAlert] = useState<{
+    title: string;
+    code: string;
+    email: string;
+    sentRealEmail: boolean;
+    senderEmail: string;
+    message?: string;
+  } | null>(null);
 
   // Find ID state
   const [findIdEmail, setFindIdEmail] = useState('');
@@ -97,20 +120,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setActiveTab(initialTab);
     setLoginError('');
     setSignupError('');
+    setSignupVerificationError('');
     setFindIdError('');
     setResetPwError('');
   }, [initialTab, isOpen]);
 
-  // Timer countdown for signup email verification
+  // Timer countdown for signup email OTP verification (calculated from real sent timestamp)
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isSignupCodeSent && !isSignupEmailVerified && signupCountdown > 0) {
-      timer = setInterval(() => {
-        setSignupCountdown((prev) => prev - 1);
-      }, 1000);
-    }
+    if (!isSignupCodeSent || isSignupEmailVerified || !signupOtpExpiresAt) return;
+
+    const updateTimers = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((signupOtpExpiresAt - now) / 1000));
+      setSignupCountdown(remaining);
+
+      if (signupResendAvailableAt) {
+        const resendRemaining = Math.max(0, Math.ceil((signupResendAvailableAt - now) / 1000));
+        setSignupResendCooldown(resendRemaining);
+      } else {
+        setSignupResendCooldown(0);
+      }
+    };
+
+    updateTimers();
+    const timer = setInterval(updateTimers, 500);
     return () => clearInterval(timer);
-  }, [isSignupCodeSent, isSignupEmailVerified, signupCountdown]);
+  }, [isSignupCodeSent, isSignupEmailVerified, signupOtpExpiresAt, signupResendAvailableAt]);
 
   // Timer countdown for Find ID verification
   useEffect(() => {
@@ -143,28 +178,71 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // Check ID duplication
-  const handleCheckIdDuplicate = () => {
+  const resetSignupFlowState = () => {
+    setSignupId('');
+    setSignupPassword('');
+    setSignupPasswordConfirm('');
+    setSignupName('');
+    setSignupEmail('');
+    setSignupPhone('');
+    setSignupGender('여성');
+    setIdCheckStatus('idle');
+    setIdCheckMessage('');
+    setCheckedUsername('');
+    setSignupInputCode('');
+    setIsSignupCodeSent(false);
+    setIsSignupEmailVerified(false);
+    setIsVerifyingSignupOtp(false);
+    setSignupVerificationError('');
+    setSignupOtpExpiresAt(null);
+    setSignupResendAvailableAt(null);
+    setSignupCountdown(SIGNUP_OTP_EXPIRY_SECONDS);
+    setSignupResendCooldown(0);
+    setSignupError('');
+    setSignupNotice(null);
+    setCompletedSignupProfile(null);
+  };
+
+  // Check ID duplication via Supabase RPC (never treat RPC error as available)
+  const handleCheckIdDuplicate = async () => {
     setSignupError('');
     const trimmed = signupId.trim();
     if (!trimmed) {
       setIdCheckStatus('duplicate');
       setIdCheckMessage('아이디를 입력해 주세요.');
+      setCheckedUsername('');
       return;
     }
     if (trimmed.length < 4) {
       setIdCheckStatus('duplicate');
       setIdCheckMessage('아이디는 최소 4자 이상이어야 합니다.');
+      setCheckedUsername('');
       return;
     }
-    const isTaken = users.some((u) => u.username.toLowerCase() === trimmed.toLowerCase());
-    if (isTaken) {
+
+    setIdCheckStatus('checking');
+    setIdCheckMessage('아이디 중복 여부를 확인하고 있습니다...');
+    setCheckedUsername('');
+
+    const rpcResult = await checkUsernameAvailability(trimmed);
+    if (!rpcResult.available) {
+      setIdCheckStatus(rpcResult.errorMessage?.includes('오류') ? 'error' : 'duplicate');
+      setIdCheckMessage(rpcResult.errorMessage || '이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
+      setCheckedUsername('');
+      return;
+    }
+
+    const isTakenLocally = users.some((u) => u.username.toLowerCase() === trimmed.toLowerCase());
+    if (isTakenLocally) {
       setIdCheckStatus('duplicate');
       setIdCheckMessage('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
-    } else {
-      setIdCheckStatus('available');
-      setIdCheckMessage('사용 가능한 아이디입니다.');
+      setCheckedUsername('');
+      return;
     }
+
+    setIdCheckStatus('available');
+    setIdCheckMessage('사용 가능한 아이디입니다.');
+    setCheckedUsername(trimmed);
   };
 
   // Handle Login Submit
@@ -200,78 +278,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     onClose();
   };
 
-  // ===================== SIGNUP FLOW =====================
-  const handleSendSignupCode = () => {
-    setSignupVerificationError('');
-    if (!signupEmail.trim() || !signupEmail.includes('@')) {
-      setSignupVerificationError('올바른 이메일 주소를 입력해 주세요.');
-      return;
+  // ===================== SIGNUP FLOW (Supabase Auth 6-digit OTP) =====================
+  const validateSignupFieldsBeforeOtp = (): string | null => {
+    const cleanId = signupId.trim();
+    const cleanName = signupName.trim();
+    const cleanPhone = signupPhone.trim();
+    const cleanEmail = signupEmail.trim();
+
+    if (!cleanId || !signupPassword.trim() || !cleanName || !cleanEmail || !cleanPhone) {
+      return '모든 필수 항목(아이디, 비밀번호, 이름, 연락처, 이메일)을 입력해 주세요.';
     }
 
-    const existing = users.find((u) => u.email.toLowerCase() === signupEmail.trim().toLowerCase());
-    if (existing) {
-      setSignupVerificationError('이미 가입된 이메일 주소입니다.');
-      return;
+    if (cleanId.length < 4) {
+      return '아이디는 최소 4자 이상이어야 합니다.';
     }
 
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setSignupVerificationCode(generated);
-    setIsSignupCodeSent(true);
-    setSignupCountdown(180);
-    setIsSignupEmailVerified(false);
-
-    setEmailAlert({
-      title: '리도라 가입 본인인증 메일',
-      code: generated,
-      email: signupEmail.trim()
-    });
-  };
-
-  const handleVerifySignupCode = () => {
-    setSignupVerificationError('');
-    if (!signupInputCode.trim()) {
-      setSignupVerificationError('인증번호 6자리를 입력해 주세요.');
-      return;
-    }
-
-    if (signupCountdown <= 0) {
-      setSignupVerificationError('인증 시간이 만료되었습니다. 인증번호를 다시 발송해 주세요.');
-      return;
-    }
-
-    if (signupInputCode.trim() === signupVerificationCode) {
-      setIsSignupEmailVerified(true);
-      setSignupVerificationError('');
-    } else {
-      setSignupVerificationError('인증번호가 일치하지 않습니다. 다시 확인해 주세요.');
-    }
-  };
-
-  const handleSignupSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSignupError('');
-
-    if (!signupId.trim() || !signupPassword.trim() || !signupName.trim() || !signupEmail.trim() || !signupPhone.trim()) {
-      setSignupError('모든 필수 항목(아이디, 비밀번호, 이름, 연락처, 이메일)을 입력해 주세요.');
-      return;
-    }
-
-    if (signupId.trim().length < 4) {
-      setSignupError('아이디는 최소 4자 이상이어야 합니다.');
-      return;
-    }
-
-    const existingUsername = users.find(
-      (u) => u.username.toLowerCase() === signupId.trim().toLowerCase()
-    );
-    if (existingUsername) {
-      setSignupError('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
-      return;
-    }
-
-    if (idCheckStatus !== 'available') {
-      setSignupError('아이디 중복 확인을 완료해 주세요.');
-      return;
+    if (idCheckStatus !== 'available' || checkedUsername.toLowerCase() !== cleanId.toLowerCase()) {
+      return '아이디 중복 확인을 완료해 주세요.';
     }
 
     const pw = signupPassword;
@@ -280,46 +303,164 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const hasSpecial = /[^a-zA-Z0-9]/.test(pw);
 
     if (pw.length < 8 || pw.length > 16 || !hasEnglish || !hasNumber || !hasSpecial) {
-      setSignupError('비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.');
-      return;
+      return '비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.';
     }
 
     if (signupPassword !== signupPasswordConfirm) {
-      setSignupError('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      return '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
+    }
+
+    if (cleanPhone.length < 8) {
+      return '올바른 연락처(휴대폰 번호)를 입력해 주세요. (예: 403-123-4567)';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return '올바른 이메일 주소를 입력해 주세요.';
+    }
+
+    return null;
+  };
+
+  const handleSendSignupCode = async () => {
+    setSignupError('');
+    setSignupVerificationError('');
+
+    const validationError = validateSignupFieldsBeforeOtp();
+    if (validationError) {
+      setSignupError(validationError);
       return;
     }
 
-    if (!signupPhone.trim() || signupPhone.trim().length < 8) {
-      setSignupError('올바른 연락처(휴대폰 번호)를 입력해 주세요. (예: 403-123-4567)');
+    const cleanEmail = signupEmail.trim();
+
+    // Resend flow when OTP was already requested
+    if (isSignupCodeSent) {
+      if (signupResendCooldown > 0) {
+        setSignupVerificationError(
+          `재전송 제한 시간입니다. ${signupResendCooldown}초 후 다시 시도해 주세요.`
+        );
+        return;
+      }
+
+      setIsSendingEmail(true);
+      try {
+        const result = await resendSignupOtp(cleanEmail);
+        if (!result.success) {
+          setSignupVerificationError(
+            result.errorMessage || '인증번호 재전송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          );
+          return;
+        }
+
+        const now = Date.now();
+        setSignupOtpExpiresAt(now + SIGNUP_OTP_EXPIRY_SECONDS * 1000);
+        setSignupResendAvailableAt(now + SIGNUP_RESEND_COOLDOWN_SECONDS * 1000);
+        setSignupCountdown(SIGNUP_OTP_EXPIRY_SECONDS);
+        setSignupResendCooldown(SIGNUP_RESEND_COOLDOWN_SECONDS);
+        setSignupInputCode('');
+        setSignupNotice({
+          email: cleanEmail,
+          message: '새 6자리 인증번호가 이메일로 재전송되었습니다. 메일함(또는 스팸함)을 확인해 주세요.',
+        });
+      } finally {
+        setIsSendingEmail(false);
+      }
       return;
     }
 
-    if (!isSignupEmailVerified) {
-      setSignupError('이메일 본인인증을 완료해야 가입할 수 있습니다.');
+    // Initial signup OTP dispatch via supabase.auth.signUp()
+    setIsSendingEmail(true);
+    try {
+      const result = await signUpWithEmailOtp({
+        email: cleanEmail,
+        password: signupPassword,
+        username: signupId.trim(),
+        name: signupName.trim(),
+        phone: signupPhone.trim(),
+        gender: signupGender,
+      });
+
+      if (!result.success) {
+        if (result.isUsernameConflict) {
+          setIdCheckStatus('duplicate');
+          setIdCheckMessage('이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.');
+          setCheckedUsername('');
+        }
+        setSignupError(
+          result.errorMessage || '인증번호 발송에 실패했습니다. 입력 정보를 확인 후 다시 시도해 주세요.'
+        );
+        return;
+      }
+
+      const now = Date.now();
+      setIsSignupCodeSent(true);
+      setIsSignupEmailVerified(false);
+      setSignupOtpExpiresAt(now + SIGNUP_OTP_EXPIRY_SECONDS * 1000);
+      setSignupResendAvailableAt(now + SIGNUP_RESEND_COOLDOWN_SECONDS * 1000);
+      setSignupCountdown(SIGNUP_OTP_EXPIRY_SECONDS);
+      setSignupResendCooldown(SIGNUP_RESEND_COOLDOWN_SECONDS);
+      setSignupInputCode('');
+      setSignupNotice({
+        email: cleanEmail,
+        message: '입력하신 이메일로 6자리 인증번호가 발송되었습니다. 메일함(또는 스팸함)을 확인해 주세요.',
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleVerifySignupCode = async () => {
+    setSignupError('');
+    setSignupVerificationError('');
+
+    const token = signupInputCode.trim();
+    if (!/^\d{6}$/.test(token)) {
+      setSignupVerificationError('이메일로 받은 6자리 숫자 인증번호를 입력해 주세요.');
       return;
     }
 
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      username: signupId.trim(),
-      password: signupPassword,
-      name: signupName.trim(),
-      email: signupEmail.trim(),
-      phone: signupPhone.trim(),
-      gender: signupGender,
-      role: 'user',
-      createdAt: new Date().toLocaleDateString('ko-KR'),
-      status: 'active',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
-    };
+    if (signupCountdown <= 0) {
+      setSignupVerificationError('인증 시간이 만료되었습니다. 재발송 버튼을 눌러 새 인증번호를 받아 주세요.');
+      return;
+    }
 
-    onRegisterUser(newUser);
-    onLoginSuccess(newUser);
-    onClose();
+    setIsVerifyingSignupOtp(true);
+    try {
+      const result = await verifySignupOtpAndFetchProfile(signupEmail.trim(), token);
+      if (!result.success || !result.profile) {
+        setSignupVerificationError(
+          result.errorMessage || '인증번호 확인에 실패했습니다. 다시 확인해 주세요.'
+        );
+        return;
+      }
+
+      setIsSignupEmailVerified(true);
+      setCompletedSignupProfile(result.profile);
+      setSignupNotice(null);
+      setSignupVerificationError('');
+    } finally {
+      setIsVerifyingSignupOtp(false);
+    }
+  };
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupError('');
+
+    if (completedSignupProfile) {
+      return;
+    }
+
+    if (!isSignupCodeSent) {
+      setSignupError('먼저 이메일 [인증번호 발송] 버튼을 눌러 6자리 인증번호를 받아 주세요.');
+      return;
+    }
+
+    await handleVerifySignupCode();
   };
 
   // ===================== FIND ID FLOW =====================
-  const handleSendFindIdCode = () => {
+  const handleSendFindIdCode = async () => {
     setFindIdError('');
     if (!findIdEmail.trim() || !findIdEmail.includes('@')) {
       setFindIdError('가입 시 등록한 이메일 주소를 정확히 입력해 주세요.');
@@ -332,18 +473,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setFindIdCode(generated);
-    setIsFindIdCodeSent(true);
-    setFindIdCountdown(180);
-    setIsFindIdVerified(false);
-    setFoundUser(matched);
+    setIsSendingEmail(true);
+    try {
+      const response = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: findIdEmail.trim(), type: 'find_id' })
+      });
+      const data = await response.json();
+      const code = data.code || Math.floor(100000 + Math.random() * 900000).toString();
 
-    setEmailAlert({
-      title: '리도라 아이디 찾기 본인확인 인증번호',
-      code: generated,
-      email: findIdEmail.trim()
-    });
+      setFindIdCode(code);
+      setIsFindIdCodeSent(true);
+      setFindIdCountdown(180);
+      setIsFindIdVerified(false);
+      setFoundUser(matched);
+
+      setEmailAlert({
+        title: '리도라 아이디 찾기 본인확인 인증번호',
+        code,
+        email: findIdEmail.trim(),
+        sentRealEmail: Boolean(data.sentRealEmail),
+        senderEmail: data.senderEmail || 'readoracontact@gmail.com',
+        message: data.message
+      });
+    } catch {
+      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setFindIdCode(fallbackCode);
+      setIsFindIdCodeSent(true);
+      setFindIdCountdown(180);
+      setIsFindIdVerified(false);
+      setFoundUser(matched);
+
+      setEmailAlert({
+        title: '리도라 아이디 찾기 본인확인 인증번호',
+        code: fallbackCode,
+        email: findIdEmail.trim(),
+        sentRealEmail: false,
+        senderEmail: 'readoracontact@gmail.com',
+        message: '오프라인/로컬 모드로 인증번호를 제공합니다.'
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const handleVerifyFindIdCode = () => {
@@ -375,7 +547,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   // ===================== RESET PASSWORD FLOW =====================
-  const handleSendResetPwCode = () => {
+  const handleSendResetPwCode = async () => {
     setResetPwError('');
     if (!resetPwUsername.trim()) {
       setResetPwError('아이디를 입력해 주세요.');
@@ -398,18 +570,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    const generated = Math.floor(100000 + Math.random() * 900000).toString();
-    setResetPwCode(generated);
-    setIsResetPwCodeSent(true);
-    setResetPwCountdown(180);
-    setIsResetPwVerified(false);
-    setResetPwSuccess(false);
+    setIsSendingEmail(true);
+    try {
+      const response = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetPwEmail.trim(), type: 'reset_password' })
+      });
+      const data = await response.json();
+      const code = data.code || Math.floor(100000 + Math.random() * 900000).toString();
 
-    setEmailAlert({
-      title: '리도라 비밀번호 재설정 본인인증 번호',
-      code: generated,
-      email: resetPwEmail.trim()
-    });
+      setResetPwCode(code);
+      setIsResetPwCodeSent(true);
+      setResetPwCountdown(180);
+      setIsResetPwVerified(false);
+      setResetPwSuccess(false);
+
+      setEmailAlert({
+        title: '리도라 비밀번호 재설정 본인인증 번호',
+        code,
+        email: resetPwEmail.trim(),
+        sentRealEmail: Boolean(data.sentRealEmail),
+        senderEmail: data.senderEmail || 'readoracontact@gmail.com',
+        message: data.message
+      });
+    } catch {
+      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setResetPwCode(fallbackCode);
+      setIsResetPwCodeSent(true);
+      setResetPwCountdown(180);
+      setIsResetPwVerified(false);
+      setResetPwSuccess(false);
+
+      setEmailAlert({
+        title: '리도라 비밀번호 재설정 본인인증 번호',
+        code: fallbackCode,
+        email: resetPwEmail.trim(),
+        sentRealEmail: false,
+        senderEmail: 'readoracontact@gmail.com',
+        message: '오프라인/로컬 모드로 인증번호를 제공합니다.'
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const handleVerifyResetPwCode = () => {
@@ -544,40 +747,106 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
         </div>
 
-        {/* Simulated Incoming Email Notification Banner */}
-        {emailAlert && (
-          <div className="bg-[#FFF8E7] border-b border-[#F0DCB3] px-5 py-3 text-xs text-[#7B4D16] flex items-start gap-2.5">
-            <Mail className="w-4 h-4 text-[#DF612D] shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="font-semibold text-[#5A360D] flex items-center justify-between">
-                <span>[모의 수신함] {emailAlert.title}</span>
-                <button
-                  type="button"
-                  onClick={() => setEmailAlert(null)}
-                  className="text-stone-400 hover:text-stone-700"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+        {/* Signup Email Sent Guidance Banner (No OTP code exposed) */}
+        {activeTab === 'signup' && signupNotice && !completedSignupProfile && (
+          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
+            <div className="flex items-start gap-2.5">
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
+              <div className="flex-1">
+                <div className="font-bold flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    인증번호 이메일 발송 완료
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSignupNotice(null)}
+                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                  <p>
+                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{signupNotice.email}</span>
+                  </p>
+                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                    {signupNotice.message}
+                  </p>
+                </div>
               </div>
-              <p className="mt-0.5 text-[11px] text-stone-600">
-                수신: <span className="font-mono">{emailAlert.email}</span>
-              </p>
-              <div className="mt-1.5 inline-flex items-center gap-2 bg-white px-2.5 py-1 rounded border border-[#DF612D]/30 shadow-xs">
-                <span className="text-[11px] text-stone-600">인증코드:</span>
-                <span className="font-mono font-bold text-sm tracking-widest text-[#DF612D]">
-                  {emailAlert.code}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeTab === 'signup') setSignupInputCode(emailAlert.code);
-                    if (activeTab === 'find_id') setFindIdInputCode(emailAlert.code);
-                    if (activeTab === 'reset_password') setResetPwInputCode(emailAlert.code);
-                  }}
-                  className="text-[10px] text-[#DF612D] underline font-medium hover:text-[#b8481a] ml-1"
-                >
-                  코드 자동 입력
-                </button>
+            </div>
+          </div>
+        )}
+
+        {/* Email Verification Notification Banner (Find ID / Reset Password only) */}
+        {activeTab !== 'signup' && emailAlert && (
+          <div className={`border-b px-5 py-3.5 text-xs transition-all ${
+            emailAlert.sentRealEmail
+              ? 'bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]'
+              : 'bg-[#FFF9EC] border-[#F4DCB0] text-[#7B4D16]'
+          }`}>
+            <div className="flex items-start gap-2.5">
+              <Mail className={`w-4 h-4 shrink-0 mt-0.5 ${
+                emailAlert.sentRealEmail ? 'text-[#2D6A4F]' : 'text-[#DF612D]'
+              }`} />
+              <div className="flex-1">
+                <div className="font-bold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    {emailAlert.sentRealEmail ? (
+                      <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        실제 이메일 발송 완료 ({emailAlert.senderEmail})
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[#DF612D]">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        대표 메일({emailAlert.senderEmail}) 본인인증 번호
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEmailAlert(null)}
+                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                  <p>
+                    <strong>발신:</strong> <span className="font-mono text-[#19221C]">{emailAlert.senderEmail}</span>
+                    <span className="mx-1 text-stone-300">|</span>
+                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{emailAlert.email}</span>
+                  </p>
+                  {emailAlert.sentRealEmail ? (
+                    <p className="text-[#2D6A4F] font-medium pt-0.5">
+                      수신함(또는 스팸함)을 확인하여 6자리 인증번호를 확인해 주세요.
+                    </p>
+                  ) : (
+                    <p className="text-stone-600 text-[10px] leading-relaxed pt-0.5">
+                      {emailAlert.message || '구글 16자리 앱 비밀번호 설정 확인 중입니다. 원활한 진행을 위해 화면에 인증번호를 즉시 제공해 드립니다.'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-2 inline-flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-xl border border-stone-200 shadow-xs">
+                  <span className="text-[11px] text-stone-600 font-medium">인증번호:</span>
+                  <span className="font-mono font-extrabold text-sm tracking-widest text-[#DF612D]">
+                    {emailAlert.code}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeTab === 'find_id') setFindIdInputCode(emailAlert.code);
+                      if (activeTab === 'reset_password') setResetPwInputCode(emailAlert.code);
+                    }}
+                    className="text-[10px] font-bold text-[#DF612D] bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded-md transition-colors ml-1 cursor-pointer"
+                  >
+                    코드 자동 입력
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -685,6 +954,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* ==================== 2. SIGNUP VIEW ==================== */}
           {activeTab === 'signup' && (
+            completedSignupProfile ? (
+              <div className="space-y-4 pt-2 text-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-base text-[#19221C]">
+                    회원가입 및 이메일 인증이 완료되었습니다!
+                  </h4>
+                  <p className="text-xs text-stone-600 mt-1">
+                    리도라(Readora) 계정이 안전하게 생성되었으며 본인 인증 세션이 유지됩니다.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white rounded-2xl border border-[#E7E0D3] text-left space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-500">이름</span>
+                    <span className="font-semibold text-[#19221C]">{completedSignupProfile.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                    <span className="text-stone-500">아이디</span>
+                    <span className="font-mono font-bold text-[#172E22]">@{completedSignupProfile.username}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                    <span className="text-stone-500">인증 이메일</span>
+                    <span className="font-mono text-stone-700">{completedSignupProfile.email || signupEmail.trim()}</span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200 text-left">
+                  현재 신규 회원가입의 이메일 OTP 인증 및 프로필 생성이 완료되었습니다. 통합 아이디 로그인 연동이 완료되면 가입하신 아이디로도 바로 로그인하실 수 있습니다.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetSignupFlowState();
+                    onClose();
+                  }}
+                  className="w-full py-3 bg-[#172E22] hover:bg-[#234332] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                >
+                  확인 및 닫기
+                </button>
+              </div>
+            ) : (
             <form onSubmit={handleSignupSubmit} className="space-y-3.5">
               {signupError && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
@@ -706,20 +1020,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setSignupId(e.target.value);
                       setIdCheckStatus('idle');
                       setIdCheckMessage('');
+                      setCheckedUsername('');
                     }}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="영문, 숫자 4자 이상"
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                   <button
                     type="button"
                     onClick={handleCheckIdDuplicate}
-                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-semibold shrink-0 transition-colors cursor-pointer"
+                    disabled={isSignupCodeSent || isSignupEmailVerified || idCheckStatus === 'checking'}
+                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-semibold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                   >
-                    중복 확인
+                    {idCheckStatus === 'checking' ? '확인 중...' : '중복 확인'}
                   </button>
                 </div>
                 {idCheckMessage && (
-                  <p className={`text-[11px] mt-1 font-medium ${idCheckStatus === 'available' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <p className={`text-[11px] mt-1 font-medium ${idCheckStatus === 'available' ? 'text-emerald-600' : idCheckStatus === 'checking' ? 'text-stone-500' : 'text-red-600'}`}>
                     {idCheckMessage}
                   </p>
                 )}
@@ -735,8 +1052,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="8~16자 영문/숫자/특수문자"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                 </div>
                 <div>
@@ -747,8 +1065,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={signupPasswordConfirm}
                     onChange={(e) => setSignupPasswordConfirm(e.target.value)}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="동일하게 한 번 더 입력"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                 </div>
               </div>
@@ -766,8 +1085,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="text"
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="홍길동"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                 </div>
                 <div>
@@ -778,8 +1098,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="tel"
                     value={signupPhone}
                     onChange={(e) => setSignupPhone(e.target.value)}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="403-123-4567"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                 </div>
               </div>
@@ -794,8 +1115,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <button
                       key={g}
                       type="button"
+                      disabled={isSignupCodeSent || isSignupEmailVerified}
                       onClick={() => setSignupGender(g)}
-                      className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                      className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer disabled:opacity-60 ${
                         signupGender === g
                           ? 'bg-[#172E22] text-white border-[#172E22] shadow-xs'
                           : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
@@ -820,18 +1142,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setSignupEmail(e.target.value);
                       setIsSignupEmailVerified(false);
                       setIsSignupCodeSent(false);
+                      setSignupOtpExpiresAt(null);
+                      setSignupResendAvailableAt(null);
+                      setSignupCountdown(SIGNUP_OTP_EXPIRY_SECONDS);
+                      setSignupResendCooldown(0);
+                      setSignupNotice(null);
                     }}
                     placeholder="calgary@example.com"
-                    disabled={isSignupEmailVerified}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
                     className="flex-1 px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
                   />
                   <button
                     type="button"
                     onClick={handleSendSignupCode}
-                    disabled={isSignupEmailVerified}
-                    className="px-3 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                    disabled={isSignupEmailVerified || isSendingEmail || (isSignupCodeSent && signupResendCooldown > 0)}
+                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                   >
-                    {isSignupCodeSent ? '재발송' : '인증번호 발송'}
+                    {isSendingEmail
+                      ? '발송 중...'
+                      : isSignupCodeSent
+                        ? signupResendCooldown > 0
+                          ? `재발송 (${signupResendCooldown}s)`
+                          : '재발송'
+                        : '인증번호 발송'}
                   </button>
                 </div>
               </div>
@@ -849,18 +1182,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <div className="flex gap-2">
                     <input
                       type="text"
+                      inputMode="numeric"
                       maxLength={6}
                       value={signupInputCode}
-                      onChange={(e) => setSignupInputCode(e.target.value)}
+                      onChange={(e) => setSignupInputCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="6자리 숫자"
                       className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
                     />
                     <button
                       type="button"
                       onClick={handleVerifySignupCode}
-                      className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer"
+                      disabled={isVerifyingSignupOtp}
+                      className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
                     >
-                      확인
+                      {isVerifyingSignupOtp ? '확인 중...' : '확인'}
                     </button>
                   </div>
                   {signupVerificationError && (
@@ -878,12 +1213,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <button
                 type="submit"
-                disabled={!isSignupEmailVerified}
+                disabled={!isSignupCodeSent || isVerifyingSignupOtp}
                 className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
               >
-                {isSignupEmailVerified ? '회원가입 완료 및 시작하기' : '이메일 인증을 완료해주세요'}
+                {isVerifyingSignupOtp
+                  ? '인증 확인 중...'
+                  : isSignupCodeSent
+                    ? '인증 확인 및 회원가입 완료'
+                    : '이메일 인증번호를 발송해주세요'}
               </button>
             </form>
+            )
           )}
 
           {/* ==================== 3. FIND ID VIEW ==================== */}
@@ -931,9 +1271,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <button
                         type="button"
                         onClick={handleSendFindIdCode}
-                        className="px-3 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 transition-colors cursor-pointer"
+                        disabled={isSendingEmail}
+                        className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
-                        {isFindIdCodeSent ? '인증번호 재발송' : '인증번호 발송'}
+                        {isSendingEmail ? '발송 중...' : isFindIdCodeSent ? '인증번호 재발송' : '인증번호 발송'}
                       </button>
                     </div>
                   </div>
@@ -1114,9 +1455,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <button
                         type="button"
                         onClick={handleSendResetPwCode}
-                        className="px-3 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 transition-colors cursor-pointer"
+                        disabled={isSendingEmail}
+                        className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
-                        {isResetPwCodeSent ? '인증번호 재발송' : '인증번호 발송'}
+                        {isSendingEmail ? '발송 중...' : isResetPwCodeSent ? '인증번호 재발송' : '인증번호 발송'}
                       </button>
                     </div>
                   </div>

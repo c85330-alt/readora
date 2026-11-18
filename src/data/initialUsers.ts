@@ -6,7 +6,7 @@ export const INITIAL_USERS: User[] = [
     username: 'readoraadmin',
     password: 'cksdn0315!',
     name: '리도라 관리자',
-    email: 'readoraadmin@readora.com',
+    email: 'readoracontact@gmail.com',
     phone: '403-888-0100',
     gender: '남성',
     role: 'admin',
