@@ -26,6 +26,7 @@ import {
   signUpWithEmailOtp,
   verifySignupOtpAndFetchProfile,
 } from '../lib/supabaseSignup';
+import { loginWithUsername } from '../lib/supabaseAuth';
 
 export type AuthMode = 'login' | 'signup' | 'find_id' | 'reset_password';
 
@@ -54,6 +55,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Signup form state
   const [signupId, setSignupId] = useState('');
@@ -119,6 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   useEffect(() => {
     setActiveTab(initialTab);
     setLoginError('');
+    setIsLoggingIn(false);
     setSignupError('');
     setSignupVerificationError('');
     setFindIdError('');
@@ -245,37 +248,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setCheckedUsername(trimmed);
   };
 
-  // Handle Login Submit
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Handle Login Submit (Supabase Auth via server /api/auth/login)
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    if (!loginId.trim() || !loginPassword.trim()) {
-      setLoginError('아이디와 패스워드를 모두 입력해 주세요.');
+    const cleanId = loginId.trim();
+    if (!cleanId || !loginPassword) {
+      setLoginError('아이디와 비밀번호를 모두 입력해 주세요.');
       return;
     }
 
-    const targetUser = users.find(
-      (u) => u.username.toLowerCase() === loginId.trim().toLowerCase()
-    );
+    setIsLoggingIn(true);
+    try {
+      const result = await loginWithUsername(cleanId, loginPassword);
+      if (!result.success || !result.user) {
+        setLoginError(result.message || '아이디 또는 비밀번호가 일치하지 않습니다.');
+        return;
+      }
 
-    if (!targetUser) {
-      setLoginError('존재하지 않는 회원 아이디입니다. 아이디를 확인해 주세요.');
-      return;
+      setLoginPassword('');
+      onLoginSuccess(result.user);
+      onClose();
+    } finally {
+      setIsLoggingIn(false);
     }
-
-    if (targetUser.password !== loginPassword) {
-      setLoginError('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    if (targetUser.status === 'suspended') {
-      setLoginError('관리자에 의해 이용이 정지된 계정입니다. 운영팀에 문의해 주세요.');
-      return;
-    }
-
-    onLoginSuccess(targetUser);
-    onClose();
   };
 
   // ===================== SIGNUP FLOW (Supabase Auth 6-digit OTP) =====================
@@ -945,9 +942,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] active:scale-[0.98] text-white rounded-xl font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+                disabled={isLoggingIn}
+                className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] active:scale-[0.98] text-white rounded-xl font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                로그인하기
+                {isLoggingIn ? '로그인 중...' : '로그인하기'}
               </button>
             </form>
           )}
@@ -984,7 +982,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
 
                 <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200 text-left">
-                  현재 신규 회원가입의 이메일 OTP 인증 및 프로필 생성이 완료되었습니다. 통합 아이디 로그인 연동이 완료되면 가입하신 아이디로도 바로 로그인하실 수 있습니다.
+                  가입하신 아이디로 자동 로그인되었으며, 새로고침 후에도 로그인 상태가 안전하게 유지됩니다.
                 </p>
 
                 <button

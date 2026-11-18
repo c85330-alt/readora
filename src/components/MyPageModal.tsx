@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, User, Mail, Phone, Calendar, Clock, MapPin, 
   BookOpen, ShieldCheck, KeyRound, CheckCircle2, 
@@ -6,6 +6,7 @@ import {
   Lock, Save, RefreshCw, Crown, Sparkles, Receipt, Trash2
 } from 'lucide-react';
 import { User as UserType, RSVPRecord, BookClub } from '../types';
+import { changeOwnSupabasePassword, updateOwnSupabaseProfile } from '../lib/supabaseAuth';
 
 interface MyPageModalProps {
   isOpen: boolean;
@@ -32,8 +33,6 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
   onSelectClubDetail,
   onExploreClubs
 }) => {
-  if (!isOpen || !currentUser) return null;
-
   // Active Tab: 'clubs' (신청 및 참여 모임) | 'profile' (개인정보)
   const [activeTab, setActiveTab] = useState<'clubs' | 'profile'>('clubs');
   
@@ -41,9 +40,9 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
   const [clubFilter, setClubFilter] = useState<'all' | 'confirmed' | 'cancelled'>('all');
 
   // Profile Form State
-  const [name, setName] = useState(currentUser.name);
-  const [email, setEmail] = useState(currentUser.email);
-  const [phone, setPhone] = useState(currentUser.phone || '');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
   const [profileError, setProfileError] = useState('');
 
@@ -51,8 +50,27 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      setName(currentUser.name);
+      setPhone(currentUser.phone || '');
+      setProfileError('');
+      setProfileSaveSuccess(false);
+      setPasswordError('');
+      setPasswordSuccess(false);
+      setCurrentPasswordInput('');
+      setNewPasswordInput('');
+      setConfirmPasswordInput('');
+    }
+  }, [isOpen, currentUser]);
+
+  if (!isOpen || !currentUser) return null;
+
+  const email = currentUser.email;
 
   // Filtered RSVPs for this user
   const userRsvps = rsvps.filter(
@@ -71,53 +89,68 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
       ? cancelledRsvps 
       : userRsvps;
 
-  // Save Profile Changes
-  const handleSaveProfile = (e: React.FormEvent) => {
+  // Save Profile Changes to Supabase profiles
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileError('');
+    setProfileSaveSuccess(false);
 
     if (!name.trim()) {
       setProfileError('이름을 입력해주세요.');
       return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      setProfileError('올바른 이메일 주소를 입력해주세요.');
-      return;
-    }
-    if (!phone.trim()) {
-      setProfileError('연락처(전화번호)는 필수 입력사항입니다.');
+    if (!phone.trim() || phone.trim().length < 8) {
+      setProfileError('올바른 연락처(전화번호)를 입력해주세요.');
       return;
     }
 
-    const updated: UserType = {
-      ...currentUser,
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim()
-    };
+    setIsSavingProfile(true);
+    try {
+      const result = await updateOwnSupabaseProfile(
+        currentUser.id,
+        {
+          name: name.trim(),
+          phone: phone.trim(),
+        },
+        currentUser.email
+      );
 
-    onUpdateUser(updated);
-    setProfileSaveSuccess(true);
-    setTimeout(() => setProfileSaveSuccess(false), 3000);
+      if (!result.success || !result.user) {
+        setProfileError(result.message || '개인정보 저장 중 오류가 발생했습니다.');
+        return;
+      }
+
+      onUpdateUser(result.user);
+      setProfileSaveSuccess(true);
+      setTimeout(() => setProfileSaveSuccess(false), 3000);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  // Change Password
-  const handleChangePassword = (e: React.FormEvent) => {
+  // Change Password via Supabase Auth (re-authenticates current password, never stores plaintext password)
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
+    setPasswordSuccess(false);
 
     if (!currentPasswordInput) {
       setPasswordError('현재 비밀번호를 입력해주세요.');
       return;
     }
 
-    if (currentUser.password && currentPasswordInput !== currentUser.password) {
-      setPasswordError('현재 비밀번호가 일치하지 않습니다.');
-      return;
-    }
+    const hasEnglish = /[a-zA-Z]/.test(newPasswordInput);
+    const hasNumber = /[0-9]/.test(newPasswordInput);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(newPasswordInput);
 
-    if (newPasswordInput.length < 6) {
-      setPasswordError('새 비밀번호는 최소 6자 이상이어야 합니다.');
+    if (
+      newPasswordInput.length < 8 ||
+      newPasswordInput.length > 16 ||
+      !hasEnglish ||
+      !hasNumber ||
+      !hasSpecial
+    ) {
+      setPasswordError('새 비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.');
       return;
     }
 
@@ -126,17 +159,27 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
       return;
     }
 
-    const updated: UserType = {
-      ...currentUser,
-      password: newPasswordInput
-    };
+    setIsChangingPassword(true);
+    try {
+      const result = await changeOwnSupabasePassword({
+        email: currentUser.email,
+        currentPassword: currentPasswordInput,
+        newPassword: newPasswordInput,
+      });
 
-    onUpdateUser(updated);
-    setPasswordSuccess(true);
-    setCurrentPasswordInput('');
-    setNewPasswordInput('');
-    setConfirmPasswordInput('');
-    setTimeout(() => setPasswordSuccess(false), 3500);
+      if (!result.success) {
+        setPasswordError(result.message || '비밀번호 변경에 실패했습니다.');
+        return;
+      }
+
+      setPasswordSuccess(true);
+      setCurrentPasswordInput('');
+      setNewPasswordInput('');
+      setConfirmPasswordInput('');
+      setTimeout(() => setPasswordSuccess(false), 3500);
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   // Google Calendar Link generator
@@ -469,15 +512,14 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-semibold text-stone-700 mb-1">
-                      가입 이메일 * (모임 확정 및 취소 알림 수신)
+                      가입 이메일 <span className="text-stone-400 font-normal">(변경 시 재인증 필요)</span>
                     </label>
                     <input
                       type="email"
-                      required
+                      disabled
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="email@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F5EE] border border-stone-300 text-stone-900 focus:outline-none focus:border-[#DF612D]"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-500 cursor-not-allowed font-mono"
                     />
                   </div>
 
@@ -499,10 +541,11 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                 <div className="pt-2 flex justify-end">
                   <button
                     type="submit"
-                    className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-[#DF612D] hover:bg-[#c95221] active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                    disabled={isSavingProfile}
+                    className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-[#DF612D] hover:bg-[#c95221] active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    <span>개인정보 변경사항 저장</span>
+                    <span>{isSavingProfile ? '저장 중...' : '개인정보 변경사항 저장'}</span>
                   </button>
                 </div>
               </form>
@@ -544,7 +587,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-semibold text-stone-700 mb-1">
-                      새 비밀번호 * (최소 6자 이상)
+                      새 비밀번호 * (8~16자 영문/숫자/특수문자)
                     </label>
                     <input
                       type="password"
@@ -574,10 +617,11 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                 <div className="pt-2 flex justify-end">
                   <button
                     type="submit"
-                    className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-[#172E22] hover:bg-[#234332] active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                    disabled={isChangingPassword}
+                    className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-[#172E22] hover:bg-[#234332] active:scale-[0.98] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>비밀번호 변경 완료</span>
+                    <span>{isChangingPassword ? '변경 중...' : '비밀번호 변경 완료'}</span>
                   </button>
                 </div>
               </form>

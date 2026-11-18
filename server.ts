@@ -4,6 +4,12 @@ import nodemailer from 'nodemailer';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  extractClientIp,
+  handleAdminGetMembers,
+  handleAdminVerify,
+  handleUsernameLogin,
+} from './server/authCore';
 
 dotenv.config();
 
@@ -13,6 +19,40 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+  // Raw text parsing for /api/auth/login so byte-length and JSON checks match Netlify Functions
+  app.post(
+    '/api/auth/login',
+    express.text({ type: '*/*', limit: '16kb' }),
+    async (req: Request, res: Response): Promise<void> => {
+      const rawBody =
+        typeof req.body === 'string'
+          ? req.body
+          : req.body !== undefined
+            ? JSON.stringify(req.body)
+            : '';
+      const clientIp =
+        extractClientIp(req.headers as Record<string, string | string[] | undefined>) ||
+        req.ip ||
+        'unknown';
+      const result = await handleUsernameLogin({ rawBody, clientIp });
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(result.status).json(result.body);
+    }
+  );
+
+  // Server-verified admin routes
+  app.get('/api/admin/verify', async (req: Request, res: Response): Promise<void> => {
+    const result = await handleAdminVerify(req.headers.authorization);
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(result.status).json(result.body);
+  });
+
+  app.get('/api/admin/members', async (req: Request, res: Response): Promise<void> => {
+    const result = await handleAdminGetMembers(req.headers.authorization);
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(result.status).json(result.body);
+  });
 
   app.use(express.json());
 

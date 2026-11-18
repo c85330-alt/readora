@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { BookClub, RSVPRecord, HostApplication, User } from './types';
+import { useState, useEffect } from 'react';
+import { BookClub, RSVPRecord, User } from './types';
 import { INITIAL_BOOK_CLUBS } from './data/initialClubs';
-import { INITIAL_USERS, INITIAL_RSVPS } from './data/initialUsers';
+import { INITIAL_RSVPS } from './data/initialUsers';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoriesSection } from './components/CategoriesSection';
@@ -28,11 +28,17 @@ import {
 } from './utils/autoCancelClubs';
 import { trackRealPageView } from './utils/analytics';
 import { Crown } from 'lucide-react';
+import { supabase } from './lib/supabase';
+import {
+  fetchAdminMembersOnServer,
+  fetchOwnSupabaseProfile,
+  logoutSupabaseSession,
+  restoreSupabaseSessionUser,
+  verifyAdminAccessOnServer,
+} from './lib/supabaseAuth';
 
 const STORAGE_KEY_CLUBS = 'readora_prod_clubs_v1';
 const STORAGE_KEY_RSVPS = 'readora_prod_rsvps_v1';
-const STORAGE_KEY_USERS = 'readora_prod_users_v1';
-const STORAGE_KEY_CURRENT_USER = 'readora_prod_session_user_v1';
 
 // One-time purge of legacy test storage keys
 if (typeof window !== 'undefined') {
@@ -60,32 +66,14 @@ if (typeof window !== 'undefined') {
 }
 
 export default function App() {
-  // Users state
-  const [users, setUsers] = useState<User[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_USERS);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return INITIAL_USERS;
-  });
+  // Current authenticated Supabase session user (never restored from localStorage)
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthInitializing, setIsAuthInitializing] = useState<boolean>(true);
 
-  // Current session user - start as null for first-time pre-login view as requested
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
-    }
-    return null;
-  });
-
-  // Admin view toggle (when logged in as admin)
+  // Admin view toggle & server-verified authorization state
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [isAdminVerifiedOnServer, setIsAdminVerifiedOnServer] = useState<boolean>(false);
+  const [adminMembers, setAdminMembers] = useState<User[]>([]);
 
   // Host view toggle (when logged in as host)
   const [isHostMode, setIsHostMode] = useState<boolean>(false);
@@ -144,11 +132,7 @@ export default function App() {
   // Success toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-  }, [users]);
-
+  // Sync clubs and RSVPs to localStorage (never mutate/delete legacy user/session keys)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_CLUBS, JSON.stringify(clubs));
   }, [clubs]);
@@ -157,17 +141,10 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(rsvps));
   }, [rsvps]);
 
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(STORAGE_KEY_CURRENT_USER, JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem(STORAGE_KEY_CURRENT_USER);
-    }
-  }, [currentUser]);
-
   // Run 24-hour auto-cancellation check for clubs failing 4-person minimum
   const handleRunAutoCancellationCheck = (isManualTrigger = false) => {
-    const { updatedClubs, updatedRsvps, newLogs } = checkAndExecuteAutoCancellations(clubs, rsvps, users);
+    const knownUsers = currentUser?.role === 'admin' && isAdminVerifiedOnServer ? adminMembers : [];
+    const { updatedClubs, updatedRsvps, newLogs } = checkAndExecuteAutoCancellations(clubs, rsvps, knownUsers);
     if (newLogs.length > 0) {
       setClubs(updatedClubs);
       setRsvps(updatedRsvps);
@@ -178,7 +155,7 @@ export default function App() {
       // Find an eligible active club with < 4 seats to simulate
       const eligibleClub = clubs.find((c) => c.status !== 'cancelled' && c.currentSeats < 4);
       if (eligibleClub) {
-        const { updatedClubs: simClubs, updatedRsvps: simRsvps, log } = simulateAutoCancelClub(eligibleClub, clubs, rsvps, users);
+        const { updatedClubs: simClubs, updatedRsvps: simRsvps, log } = simulateAutoCancelClub(eligibleClub, clubs, rsvps, knownUsers);
         setClubs(simClubs);
         setRsvps(simRsvps);
         setAutoCancelLogs((prev) => [log, ...prev]);
@@ -188,6 +165,91 @@ export default function App() {
       }
     }
   };
+
+  // Restore Supabase session on mount & listen for auth state changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const initAuth = async () => {
+      try {
+        const restored = await restoreSupabaseSessionUser();
+        if (!isMounted) return;
+
+        if (restored.suspended) {
+          setCurrentUser(null);
+          setIsAdminMode(false);
+          setIsAdminVerifiedOnServer(false);
+          setAdminMembers([]);
+          setIsHostMode(false);
+          showToast('관리자에 의해 이용이 정지된 계정입니다. 운영팀에 문의해 주세요.');
+        } else if (restored.user) {
+          setCurrentUser(restored.user);
+        } else {
+          setCurrentUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsAuthInitializing(false);
+        }
+      }
+    };
+
+    initAuth();
+
+    if (!supabase) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        setCurrentUser(null);
+        setIsAdminMode(false);
+        setIsAdminVerifiedOnServer(false);
+        setAdminMembers([]);
+        setIsHostMode(false);
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        const userId = session.user.id;
+        const emailFallback = session.user.email ?? undefined;
+        // Defer Supabase query out of onAuthStateChange callback tick
+        setTimeout(async () => {
+          const profileRes = await fetchOwnSupabaseProfile(userId, emailFallback);
+          if (!isMounted) return;
+
+          if (profileRes.suspended) {
+            await logoutSupabaseSession();
+            setCurrentUser(null);
+            setIsAdminMode(false);
+            setIsAdminVerifiedOnServer(false);
+            setAdminMembers([]);
+            setIsHostMode(false);
+            showToast('관리자에 의해 이용이 정지된 계정입니다. 운영팀에 문의해 주세요.');
+            return;
+          }
+
+          if (profileRes.user) {
+            setCurrentUser(profileRes.user);
+            if (profileRes.user.role !== 'admin') {
+              setIsAdminMode(false);
+              setIsAdminVerifiedOnServer(false);
+              setAdminMembers([]);
+            }
+          }
+        }, 0);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Initial check and analytics track on mount
   useEffect(() => {
@@ -202,19 +264,57 @@ export default function App() {
     }, 3500);
   };
 
+  // Server-verified admin entry helper
+  const handleEnterAdminDashboard = async (userOverride?: User): Promise<boolean> => {
+    const activeUser = userOverride ?? currentUser;
+    if (!activeUser || activeUser.role !== 'admin') {
+      setIsAdminMode(false);
+      setIsAdminVerifiedOnServer(false);
+      showToast('관리자 권한이 없는 계정입니다.');
+      return false;
+    }
+
+    const verifyRes = await verifyAdminAccessOnServer();
+    if (!verifyRes.authorized) {
+      setIsAdminMode(false);
+      setIsAdminVerifiedOnServer(false);
+      setAdminMembers([]);
+      showToast(verifyRes.message || '서버에서 관리자 권한을 확인할 수 없습니다.');
+      return false;
+    }
+
+    setIsAdminVerifiedOnServer(true);
+    setIsAdminMode(true);
+    setIsHostMode(false);
+
+    const membersRes = await fetchAdminMembersOnServer();
+    if (membersRes.success) {
+      setAdminMembers(membersRes.members);
+    } else if (membersRes.message) {
+      showToast(membersRes.message);
+    }
+
+    return true;
+  };
+
   // Auth Handlers
-  const handleLoginSuccess = (user: User) => {
+  const handleLoginSuccess = async (user: User) => {
     setCurrentUser(user);
     if (user.role === 'admin') {
-      setIsAdminMode(true);
-      setIsHostMode(false);
-      showToast(`👑 총괄 관리자(${user.name})님 환영합니다! 관리자 대시보드로 이동합니다.`);
+      const ok = await handleEnterAdminDashboard(user);
+      if (ok) {
+        showToast(`👑 총괄 관리자(${user.name})님 환영합니다! 관리자 대시보드로 이동합니다.`);
+      }
     } else if (user.role === 'host') {
       setIsHostMode(true);
       setIsAdminMode(false);
+      setIsAdminVerifiedOnServer(false);
+      setAdminMembers([]);
       showToast(`👑 ${user.name}님 환영합니다! 호스트 모임 관리 센터로 이동합니다.`);
     } else {
       setIsAdminMode(false);
+      setIsAdminVerifiedOnServer(false);
+      setAdminMembers([]);
       setIsHostMode(false);
       showToast(`🎉 ${user.name}님 환영합니다! 리도라(Readora) 독서모임에 참여해보세요.`);
     }
@@ -224,34 +324,27 @@ export default function App() {
     setIsLogoutConfirmOpen(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutSupabaseSession();
     setCurrentUser(null);
     setIsAdminMode(false);
+    setIsAdminVerifiedOnServer(false);
+    setAdminMembers([]);
     setIsHostMode(false);
     showToast('안전하게 로그아웃 되었습니다.');
   };
 
-  const handleRegisterUser = (newUser: User) => {
-    setUsers((prev) => [newUser, ...prev]);
+  const handleRegisterUser = (_newUser: User) => {
+    // Signup is handled via Supabase Auth + profiles trigger
   };
 
-  const handleResetPassword = (username: string, newPw: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.username.toLowerCase() === username.toLowerCase()
-          ? { ...u, password: newPw }
-          : u
-      )
-    );
-    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
-      setCurrentUser((prev) => (prev ? { ...prev, password: newPw } : null));
-    }
-    showToast('🔒 비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해 주세요.');
+  const handleResetPassword = (_username: string, _newPw: string) => {
+    showToast('🔒 비밀번호 변경은 로그인 후 마이페이지 > 비밀번호 및 보안 관리에서 안전하게 진행해 주세요.');
   };
 
   const handleUpdateUser = (updatedUser: User) => {
-    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
     setCurrentUser(updatedUser);
+    setAdminMembers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
     showToast('👤 개인정보가 성공적으로 업데이트되었습니다.');
   };
 
@@ -421,8 +514,8 @@ export default function App() {
     document.getElementById('explore-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // VIEW 1: Admin Dashboard (when admin is logged in and in admin mode)
-  if (currentUser?.role === 'admin' && isAdminMode) {
+  // VIEW 1: Admin Dashboard (requires server-verified admin role)
+  if (currentUser?.role === 'admin' && isAdminMode && isAdminVerifiedOnServer) {
     return (
       <>
         {/* Toast Notification */}
@@ -436,7 +529,7 @@ export default function App() {
           currentUser={currentUser}
           onLogout={handleRequestLogout}
           onSwitchToUserView={() => setIsAdminMode(false)}
-          users={users}
+          users={adminMembers}
           clubs={clubs}
           rsvps={rsvps}
           onUpdateClubStatus={handleUpdateClubStatus}
@@ -642,7 +735,7 @@ export default function App() {
       )}
 
       {/* Admin Quick Switch Bar */}
-      {currentUser?.role === 'admin' && (
+      {!isAuthInitializing && currentUser?.role === 'admin' && (
         <div className="bg-[#172E22] text-white text-xs py-2 px-4 flex items-center justify-between sticky top-0 z-50 border-b border-emerald-900 shadow-sm">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -650,7 +743,9 @@ export default function App() {
             <span className="font-mono text-stone-300">{currentUser.name}</span>
           </div>
           <button
-            onClick={() => setIsAdminMode(true)}
+            onClick={() => {
+              void handleEnterAdminDashboard();
+            }}
             className="px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-xs"
           >
             관리자 대시보드로 전환 →
@@ -659,7 +754,7 @@ export default function App() {
       )}
 
       {/* Host Quick Switch Bar */}
-      {currentUser?.role === 'host' && (
+      {!isAuthInitializing && currentUser?.role === 'host' && (
         <div className="bg-[#B45309] text-white text-xs py-2 px-4 flex items-center justify-between sticky top-0 z-50 border-b border-amber-900 shadow-sm">
           <div className="flex items-center gap-2">
             <Crown className="w-3.5 h-3.5 text-amber-200" />
@@ -687,7 +782,9 @@ export default function App() {
           setIsAuthModalOpen(true);
         }}
         onRequestLogout={handleRequestLogout}
-        onOpenAdmin={() => setIsAdminMode(true)}
+        onOpenAdmin={() => {
+          void handleEnterAdminDashboard();
+        }}
         onOpenHostDashboard={() => setIsHostMode(true)}
         onOpenMyChapters={() => {
           if (!currentUser) {
@@ -884,7 +981,7 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
-        users={users}
+        users={[]}
         onRegisterUser={handleRegisterUser}
         onResetPassword={handleResetPassword}
         initialTab={authModalTab}
