@@ -245,8 +245,38 @@ export default function App() {
       }
     });
 
+    const handleStorageChange = (event: StorageEvent) => {
+      if (!isMounted || event.storageArea !== window.localStorage) return;
+
+      // Ignore localStorage auth clears if this tab runs an isolated sessionStorage-only session
+      try {
+        if (window.sessionStorage.getItem('readora_auth_persist_mode') === 'session') {
+          return;
+        }
+      } catch {
+        // Ignore storage errors
+      }
+
+      const key = event.key;
+      const isAuthCleared =
+        key === null ||
+        (key === 'readora_auth_persist_mode' && event.newValue === null) ||
+        (key.startsWith('sb-') && key.includes('-auth-token') && event.newValue === null);
+
+      if (isAuthCleared) {
+        setCurrentUser(null);
+        setIsAdminMode(false);
+        setIsAdminVerifiedOnServer(false);
+        setAdminMembers([]);
+        setIsHostMode(false);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('storage', handleStorageChange);
       authListener.subscription.unsubscribe();
     };
   }, []);

@@ -5,16 +5,11 @@ import {
   User as UserIcon, 
   Mail, 
   CheckCircle2, 
-  ShieldCheck, 
   AlertCircle, 
-  Sparkles, 
   Clock, 
   ArrowLeft,
-  KeyRound,
-  Phone,
   Copy,
-  Check,
-  Crown
+  Check
 } from 'lucide-react';
 import { User } from '../types';
 import {
@@ -26,9 +21,27 @@ import {
   signUpWithEmailOtp,
   verifySignupOtpAndFetchProfile,
 } from '../lib/supabaseSignup';
-import { loginWithUsername } from '../lib/supabaseAuth';
+import {
+  AUTH_OTP_EXPIRY_SECONDS,
+  AUTH_OTP_RESEND_COOLDOWN_SECONDS,
+  RecoverySessionTokens,
+  completePasswordResetWithRecoverySession,
+  loginWithUsername,
+  revokeEphemeralRecoverySession,
+  sendFindIdOtp,
+  sendResetPasswordOtp,
+  verifyFindIdOtp,
+  verifyResetPasswordOtp,
+} from '../lib/supabaseAuth';
 
 export type AuthMode = 'login' | 'signup' | 'find_id' | 'reset_password';
+
+interface FoundIdInfo {
+  username: string;
+  name: string;
+  createdAt: string;
+  email: string;
+}
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -46,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess,
   users,
   onRegisterUser: _onRegisterUser,
-  onResetPassword,
+  onResetPassword: _onResetPassword,
   initialTab = 'login'
 }) => {
   const [activeTab, setActiveTab] = useState<AuthMode>(initialTab);
@@ -54,6 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Login form state
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -83,43 +97,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [signupNotice, setSignupNotice] = useState<{ email: string; message: string } | null>(null);
   const [completedSignupProfile, setCompletedSignupProfile] = useState<SupabaseProfile | null>(null);
 
-  // Real Email Verification state (for Find ID / Reset Password)
+  // Signup OTP dispatch loading state
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [emailAlert, setEmailAlert] = useState<{
-    title: string;
-    code: string;
-    email: string;
-    sentRealEmail: boolean;
-    senderEmail: string;
-    message?: string;
-  } | null>(null);
 
-  // Find ID state
+  // Find ID state (Supabase Auth OTP + server verification)
   const [findIdEmail, setFindIdEmail] = useState('');
-  const [findIdCode, setFindIdCode] = useState('');
   const [findIdInputCode, setFindIdInputCode] = useState('');
   const [isFindIdCodeSent, setIsFindIdCodeSent] = useState(false);
   const [isFindIdVerified, setIsFindIdVerified] = useState(false);
-  const [foundUser, setFoundUser] = useState<User | null>(null);
+  const [isSendingFindIdOtp, setIsSendingFindIdOtp] = useState(false);
+  const [isVerifyingFindIdOtp, setIsVerifyingFindIdOtp] = useState(false);
+  const [findIdNotice, setFindIdNotice] = useState<{ email: string; message: string } | null>(null);
+  const [foundUser, setFoundUser] = useState<FoundIdInfo | null>(null);
   const [findIdError, setFindIdError] = useState('');
-  const [findIdCountdown, setFindIdCountdown] = useState(180);
+  const [findIdOtpExpiresAt, setFindIdOtpExpiresAt] = useState<number | null>(null);
+  const [findIdResendAvailableAt, setFindIdResendAvailableAt] = useState<number | null>(null);
+  const [findIdCountdown, setFindIdCountdown] = useState(AUTH_OTP_EXPIRY_SECONDS);
+  const [findIdResendCooldown, setFindIdResendCooldown] = useState(0);
   const [copiedId, setCopiedId] = useState(false);
 
-  // Reset Password state
-  const [resetPwUsername, setResetPwUsername] = useState('');
+  // Reset Password state (Supabase Auth recovery OTP + isolated updateUser)
   const [resetPwEmail, setResetPwEmail] = useState('');
-  const [resetPwCode, setResetPwCode] = useState('');
   const [resetPwInputCode, setResetPwInputCode] = useState('');
   const [isResetPwCodeSent, setIsResetPwCodeSent] = useState(false);
   const [isResetPwVerified, setIsResetPwVerified] = useState(false);
+  const [isSendingResetPwOtp, setIsSendingResetPwOtp] = useState(false);
+  const [isVerifyingResetPwOtp, setIsVerifyingResetPwOtp] = useState(false);
+  const [isUpdatingResetPw, setIsUpdatingResetPw] = useState(false);
+  const [resetPwNotice, setResetPwNotice] = useState<{ email: string; message: string } | null>(null);
+  const [recoverySession, setRecoverySession] = useState<RecoverySessionTokens | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [resetPwSuccess, setResetPwSuccess] = useState(false);
   const [resetPwError, setResetPwError] = useState('');
-  const [resetPwCountdown, setResetPwCountdown] = useState(180);
+  const [resetPwOtpExpiresAt, setResetPwOtpExpiresAt] = useState<number | null>(null);
+  const [resetPwResendAvailableAt, setResetPwResendAvailableAt] = useState<number | null>(null);
+  const [resetPwCountdown, setResetPwCountdown] = useState(AUTH_OTP_EXPIRY_SECONDS);
+  const [resetPwResendCooldown, setResetPwResendCooldown] = useState(0);
 
   useEffect(() => {
     setActiveTab(initialTab);
+    setRememberMe(false);
     setLoginError('');
     setIsLoggingIn(false);
     setSignupError('');
@@ -127,6 +145,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setFindIdError('');
     setResetPwError('');
   }, [initialTab, isOpen]);
+
+  // Clean up any unused in-memory recovery session if modal closes
+  useEffect(() => {
+    if (!isOpen && recoverySession) {
+      void revokeEphemeralRecoverySession(recoverySession);
+      setRecoverySession(null);
+      setNewPassword('');
+      setNewPasswordConfirm('');
+      setIsResetPwVerified(false);
+    }
+  }, [isOpen, recoverySession]);
 
   // Timer countdown for signup email OTP verification (calculated from real sent timestamp)
   useEffect(() => {
@@ -150,27 +179,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return () => clearInterval(timer);
   }, [isSignupCodeSent, isSignupEmailVerified, signupOtpExpiresAt, signupResendAvailableAt]);
 
-  // Timer countdown for Find ID verification
+  // Timer countdown for Find ID OTP verification
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isFindIdCodeSent && !isFindIdVerified && findIdCountdown > 0) {
-      timer = setInterval(() => {
-        setFindIdCountdown((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isFindIdCodeSent, isFindIdVerified, findIdCountdown]);
+    if (!isFindIdCodeSent || isFindIdVerified || !findIdOtpExpiresAt) return;
 
-  // Timer countdown for Reset Password verification
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isResetPwCodeSent && !isResetPwVerified && resetPwCountdown > 0) {
-      timer = setInterval(() => {
-        setResetPwCountdown((prev) => prev - 1);
-      }, 1000);
-    }
+    const updateTimers = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((findIdOtpExpiresAt - now) / 1000));
+      setFindIdCountdown(remaining);
+
+      if (findIdResendAvailableAt) {
+        const resendRemaining = Math.max(0, Math.ceil((findIdResendAvailableAt - now) / 1000));
+        setFindIdResendCooldown(resendRemaining);
+      } else {
+        setFindIdResendCooldown(0);
+      }
+    };
+
+    updateTimers();
+    const timer = setInterval(updateTimers, 500);
     return () => clearInterval(timer);
-  }, [isResetPwCodeSent, isResetPwVerified, resetPwCountdown]);
+  }, [isFindIdCodeSent, isFindIdVerified, findIdOtpExpiresAt, findIdResendAvailableAt]);
+
+  // Timer countdown for Reset Password OTP verification
+  useEffect(() => {
+    if (!isResetPwCodeSent || isResetPwVerified || !resetPwOtpExpiresAt) return;
+
+    const updateTimers = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((resetPwOtpExpiresAt - now) / 1000));
+      setResetPwCountdown(remaining);
+
+      if (resetPwResendAvailableAt) {
+        const resendRemaining = Math.max(0, Math.ceil((resetPwResendAvailableAt - now) / 1000));
+        setResetPwResendCooldown(resendRemaining);
+      } else {
+        setResetPwResendCooldown(0);
+      }
+    };
+
+    updateTimers();
+    const timer = setInterval(updateTimers, 500);
+    return () => clearInterval(timer);
+  }, [isResetPwCodeSent, isResetPwVerified, resetPwOtpExpiresAt, resetPwResendAvailableAt]);
 
   if (!isOpen) return null;
 
@@ -261,7 +312,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setIsLoggingIn(true);
     try {
-      const result = await loginWithUsername(cleanId, loginPassword);
+      const result = await loginWithUsername(cleanId, loginPassword, rememberMe);
       if (!result.success || !result.user) {
         setLoginError(result.message || '아이디 또는 비밀번호가 일치하지 않습니다.');
         return;
@@ -456,82 +507,144 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     await handleVerifySignupCode();
   };
 
-  // ===================== FIND ID FLOW =====================
+  // ===================== FIND ID FLOW (Supabase Auth OTP + Server Verification) =====================
+  const resetFindIdFlowState = () => {
+    setFindIdInputCode('');
+    setIsFindIdCodeSent(false);
+    setIsFindIdVerified(false);
+    setFoundUser(null);
+    setFindIdError('');
+    setFindIdNotice(null);
+    setFindIdOtpExpiresAt(null);
+    setFindIdResendAvailableAt(null);
+    setFindIdCountdown(AUTH_OTP_EXPIRY_SECONDS);
+    setFindIdResendCooldown(0);
+  };
+
+  const resetPasswordFlowState = (clearEmail: boolean = false) => {
+    if (recoverySession) {
+      void revokeEphemeralRecoverySession(recoverySession);
+      setRecoverySession(null);
+    }
+    if (clearEmail) {
+      setResetPwEmail('');
+    }
+    setResetPwInputCode('');
+    setIsResetPwCodeSent(false);
+    setIsResetPwVerified(false);
+    setResetPwNotice(null);
+    setNewPassword('');
+    setNewPasswordConfirm('');
+    setResetPwSuccess(false);
+    setResetPwError('');
+    setResetPwOtpExpiresAt(null);
+    setResetPwResendAvailableAt(null);
+    setResetPwCountdown(AUTH_OTP_EXPIRY_SECONDS);
+    setResetPwResendCooldown(0);
+  };
+
+  const switchAuthTab = (targetTab: AuthMode) => {
+    if (activeTab === 'reset_password' && targetTab !== 'reset_password' && recoverySession) {
+      void revokeEphemeralRecoverySession(recoverySession);
+      setRecoverySession(null);
+      setIsResetPwVerified(false);
+      setNewPassword('');
+      setNewPasswordConfirm('');
+    }
+    setActiveTab(targetTab);
+  };
+
+  const handleCloseModal = () => {
+    if (recoverySession) {
+      void revokeEphemeralRecoverySession(recoverySession);
+      setRecoverySession(null);
+    }
+    setNewPassword('');
+    setNewPasswordConfirm('');
+    setLoginPassword('');
+    onClose();
+  };
+
   const handleSendFindIdCode = async () => {
     setFindIdError('');
-    if (!findIdEmail.trim() || !findIdEmail.includes('@')) {
+    const cleanEmail = findIdEmail.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       setFindIdError('가입 시 등록한 이메일 주소를 정확히 입력해 주세요.');
       return;
     }
 
-    const matched = users.find((u) => u.email.toLowerCase() === findIdEmail.trim().toLowerCase());
-    if (!matched) {
-      setFindIdError('해당 이메일로 등록된 회원 정보가 존재하지 않습니다.');
+    if (isFindIdCodeSent && findIdResendCooldown > 0) {
+      setFindIdError(`보안상 인증번호 재발송은 ${findIdResendCooldown}초 후에 요청할 수 있습니다.`);
       return;
     }
 
-    setIsSendingEmail(true);
+    setIsSendingFindIdOtp(true);
     try {
-      const response = await fetch('/api/send-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: findIdEmail.trim(), type: 'find_id' })
-      });
-      const data = await response.json();
-      const code = data.code || Math.floor(100000 + Math.random() * 900000).toString();
+      const result = await sendFindIdOtp(cleanEmail);
+      if (!result.success) {
+        if (result.cooldownSeconds && result.cooldownSeconds > 0) {
+          setFindIdResendAvailableAt(Date.now() + result.cooldownSeconds * 1000);
+          setFindIdResendCooldown(result.cooldownSeconds);
+        }
+        setFindIdError(result.message || '인증번호 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
 
-      setFindIdCode(code);
+      const now = Date.now();
+      const expiry = result.expirySeconds ?? AUTH_OTP_EXPIRY_SECONDS;
+      const cooldown = result.cooldownSeconds ?? AUTH_OTP_RESEND_COOLDOWN_SECONDS;
+
       setIsFindIdCodeSent(true);
-      setFindIdCountdown(180);
       setIsFindIdVerified(false);
-      setFoundUser(matched);
-
-      setEmailAlert({
-        title: '리도라 아이디 찾기 본인확인 인증번호',
-        code,
-        email: findIdEmail.trim(),
-        sentRealEmail: Boolean(data.sentRealEmail),
-        senderEmail: data.senderEmail || 'readoracontact@gmail.com',
-        message: data.message
-      });
-    } catch {
-      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setFindIdCode(fallbackCode);
-      setIsFindIdCodeSent(true);
-      setFindIdCountdown(180);
-      setIsFindIdVerified(false);
-      setFoundUser(matched);
-
-      setEmailAlert({
-        title: '리도라 아이디 찾기 본인확인 인증번호',
-        code: fallbackCode,
-        email: findIdEmail.trim(),
-        sentRealEmail: false,
-        senderEmail: 'readoracontact@gmail.com',
-        message: '오프라인/로컬 모드로 인증번호를 제공합니다.'
+      setFoundUser(null);
+      setFindIdInputCode('');
+      setFindIdOtpExpiresAt(now + expiry * 1000);
+      setFindIdResendAvailableAt(now + cooldown * 1000);
+      setFindIdCountdown(expiry);
+      setFindIdResendCooldown(cooldown);
+      setFindIdNotice({
+        email: cleanEmail,
+        message:
+          result.message ||
+          '입력하신 이메일이 가입된 계정이라면 6자리 본인확인 인증번호가 발송되었습니다. 메일함(또는 스팸함)을 확인해 주세요.',
       });
     } finally {
-      setIsSendingEmail(false);
+      setIsSendingFindIdOtp(false);
     }
   };
 
-  const handleVerifyFindIdCode = () => {
+  const handleVerifyFindIdCode = async () => {
     setFindIdError('');
-    if (!findIdInputCode.trim()) {
-      setFindIdError('인증번호 6자리를 입력해 주세요.');
+    const token = findIdInputCode.trim();
+    if (!/^\d{6}$/.test(token)) {
+      setFindIdError('이메일로 받은 6자리 숫자 인증번호를 입력해 주세요.');
       return;
     }
 
     if (findIdCountdown <= 0) {
-      setFindIdError('인증번호 유효 시간이 만료되었습니다. 다시 발송해 주세요.');
+      setFindIdError('인증번호 유효 시간(10분)이 만료되었습니다. 재발송 버튼을 눌러 주세요.');
       return;
     }
 
-    if (findIdInputCode.trim() === findIdCode) {
+    setIsVerifyingFindIdOtp(true);
+    try {
+      const result = await verifyFindIdOtp(findIdEmail.trim(), token);
+      if (!result.success || !result.username) {
+        setFindIdError(result.message || '인증번호가 일치하지 않거나 만료되었습니다. 다시 확인해 주세요.');
+        return;
+      }
+
+      setFoundUser({
+        username: result.username,
+        name: result.name || '',
+        createdAt: result.createdAt || '',
+        email: findIdEmail.trim(),
+      });
       setIsFindIdVerified(true);
+      setFindIdNotice(null);
       setFindIdError('');
-    } else {
-      setFindIdError('인증번호가 일치하지 않습니다. 다시 확인해 주세요.');
+    } finally {
+      setIsVerifyingFindIdOtp(false);
     }
   };
 
@@ -543,98 +656,99 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  // ===================== RESET PASSWORD FLOW =====================
+  // ===================== RESET PASSWORD FLOW (Supabase Auth Recovery OTP) =====================
   const handleSendResetPwCode = async () => {
     setResetPwError('');
-    if (!resetPwUsername.trim()) {
-      setResetPwError('아이디를 입력해 주세요.');
+    const cleanEmail = resetPwEmail.trim();
+
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setResetPwError('가입 시 등록한 이메일 주소를 정확히 입력해 주세요.');
       return;
     }
 
-    if (!resetPwEmail.trim() || !resetPwEmail.includes('@')) {
-      setResetPwError('가입 시 등록한 이메일 주소를 입력해 주세요.');
+    if (isResetPwCodeSent && resetPwResendCooldown > 0) {
+      setResetPwError(`보안상 인증번호 재발송은 ${resetPwResendCooldown}초 후에 요청할 수 있습니다.`);
       return;
     }
 
-    const matched = users.find(
-      (u) =>
-        u.username.toLowerCase() === resetPwUsername.trim().toLowerCase() &&
-        u.email.toLowerCase() === resetPwEmail.trim().toLowerCase()
-    );
-
-    if (!matched) {
-      setResetPwError('입력하신 아이디와 이메일 정보가 일치하는 회원을 찾을 수 없습니다.');
-      return;
-    }
-
-    setIsSendingEmail(true);
+    setIsSendingResetPwOtp(true);
     try {
-      const response = await fetch('/api/send-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetPwEmail.trim(), type: 'reset_password' })
-      });
-      const data = await response.json();
-      const code = data.code || Math.floor(100000 + Math.random() * 900000).toString();
+      const result = await sendResetPasswordOtp(cleanEmail);
+      if (!result.success) {
+        if (result.cooldownSeconds && result.cooldownSeconds > 0) {
+          setResetPwResendAvailableAt(Date.now() + result.cooldownSeconds * 1000);
+          setResetPwResendCooldown(result.cooldownSeconds);
+        }
+        setResetPwError(result.message || '인증번호 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
 
-      setResetPwCode(code);
+      const now = Date.now();
+      const expiry = result.expirySeconds ?? AUTH_OTP_EXPIRY_SECONDS;
+      const cooldown = result.cooldownSeconds ?? AUTH_OTP_RESEND_COOLDOWN_SECONDS;
+
+      if (recoverySession) {
+        void revokeEphemeralRecoverySession(recoverySession);
+        setRecoverySession(null);
+      }
+
       setIsResetPwCodeSent(true);
-      setResetPwCountdown(180);
       setIsResetPwVerified(false);
       setResetPwSuccess(false);
-
-      setEmailAlert({
-        title: '리도라 비밀번호 재설정 본인인증 번호',
-        code,
-        email: resetPwEmail.trim(),
-        sentRealEmail: Boolean(data.sentRealEmail),
-        senderEmail: data.senderEmail || 'readoracontact@gmail.com',
-        message: data.message
-      });
-    } catch {
-      const fallbackCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setResetPwCode(fallbackCode);
-      setIsResetPwCodeSent(true);
-      setResetPwCountdown(180);
-      setIsResetPwVerified(false);
-      setResetPwSuccess(false);
-
-      setEmailAlert({
-        title: '리도라 비밀번호 재설정 본인인증 번호',
-        code: fallbackCode,
-        email: resetPwEmail.trim(),
-        sentRealEmail: false,
-        senderEmail: 'readoracontact@gmail.com',
-        message: '오프라인/로컬 모드로 인증번호를 제공합니다.'
+      setResetPwInputCode('');
+      setResetPwOtpExpiresAt(now + expiry * 1000);
+      setResetPwResendAvailableAt(now + cooldown * 1000);
+      setResetPwCountdown(expiry);
+      setResetPwResendCooldown(cooldown);
+      setResetPwNotice({
+        email: cleanEmail,
+        message:
+          result.message ||
+          '입력하신 이메일이 가입된 계정이라면 비밀번호 재설정 6자리 인증번호가 발송되었습니다. 메일함(또는 스팸함)을 확인해 주세요.',
       });
     } finally {
-      setIsSendingEmail(false);
+      setIsSendingResetPwOtp(false);
     }
   };
 
-  const handleVerifyResetPwCode = () => {
+  const handleVerifyResetPwCode = async () => {
     setResetPwError('');
-    if (!resetPwInputCode.trim()) {
-      setResetPwError('인증번호 6자리를 입력해 주세요.');
+    const token = resetPwInputCode.trim();
+    if (!/^\d{6}$/.test(token)) {
+      setResetPwError('이메일로 받은 6자리 숫자 인증번호를 입력해 주세요.');
       return;
     }
 
     if (resetPwCountdown <= 0) {
-      setResetPwError('인증번호 유효 시간이 만료되었습니다. 다시 발송해 주세요.');
+      setResetPwError('인증번호 유효 시간(10분)이 만료되었습니다. 재발송 버튼을 눌러 주세요.');
       return;
     }
 
-    if (resetPwInputCode.trim() === resetPwCode) {
+    setIsVerifyingResetPwOtp(true);
+    try {
+      const result = await verifyResetPasswordOtp(resetPwEmail.trim(), token);
+      if (!result.success || !result.recoverySession) {
+        setResetPwError(result.message || '인증번호가 일치하지 않거나 만료되었습니다. 다시 확인해 주세요.');
+        return;
+      }
+
+      setRecoverySession(result.recoverySession);
       setIsResetPwVerified(true);
+      setResetPwNotice(null);
       setResetPwError('');
-    } else {
-      setResetPwError('인증번호가 일치하지 않습니다. 다시 확인해 주세요.');
+    } finally {
+      setIsVerifyingResetPwOtp(false);
     }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetPwError('');
+
+    if (!isResetPwVerified || !recoverySession) {
+      setResetPwError('먼저 이메일 본인인증을 완료해 주세요.');
+      return;
+    }
 
     if (!newPassword.trim()) {
       setResetPwError('새 비밀번호를 입력해 주세요.');
@@ -655,10 +769,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (onResetPassword) {
-      onResetPassword(resetPwUsername.trim(), newPassword);
+    setIsUpdatingResetPw(true);
+    try {
+      const result = await completePasswordResetWithRecoverySession(recoverySession, newPassword);
+      if (!result.success) {
+        setResetPwError(result.message || '비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.');
+        return;
+      }
+
+      // Recovery session is terminated inside completePasswordResetWithRecoverySession; clear memory
+      setRecoverySession(null);
+      setNewPassword('');
+      setNewPasswordConfirm('');
+      setResetPwSuccess(true);
+    } finally {
+      setIsUpdatingResetPw(false);
     }
-    setResetPwSuccess(true);
   };
 
   return (
@@ -670,7 +796,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Header */}
         <div className="bg-[#172E22] text-white px-4 sm:px-6 pt-5 pb-4 relative">
           <button
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="absolute top-4 right-4 text-stone-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
             aria-label="닫기"
           >
@@ -692,7 +818,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {activeTab === 'login' || activeTab === 'signup' ? (
             <div className="flex mt-3 sm:mt-4 bg-black/25 p-1 rounded-xl">
               <button
-                onClick={() => { setActiveTab('login'); setLoginError(''); }}
+                onClick={() => { switchAuthTab('login'); setLoginError(''); }}
                 className={`flex-1 py-1.5 sm:py-2 text-xs font-semibold rounded-lg transition-all ${
                   activeTab === 'login'
                     ? 'bg-white text-[#172E22] shadow-sm'
@@ -702,7 +828,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 로그인 (Login)
               </button>
               <button
-                onClick={() => { setActiveTab('signup'); setSignupError(''); }}
+                onClick={() => { switchAuthTab('signup'); setSignupError(''); }}
                 className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                   activeTab === 'signup'
                     ? 'bg-white text-[#172E22] shadow-sm'
@@ -716,7 +842,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="flex items-center justify-between mt-4 bg-black/25 p-1 rounded-xl">
               <button
                 onClick={() => {
-                  setActiveTab('find_id');
+                  switchAuthTab('find_id');
                   setFindIdError('');
                 }}
                 className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
@@ -729,7 +855,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('reset_password');
+                  switchAuthTab('reset_password');
                   setResetPwError('');
                 }}
                 className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
@@ -776,73 +902,64 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Email Verification Notification Banner (Find ID / Reset Password only) */}
-        {activeTab !== 'signup' && emailAlert && (
-          <div className={`border-b px-5 py-3.5 text-xs transition-all ${
-            emailAlert.sentRealEmail
-              ? 'bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]'
-              : 'bg-[#FFF9EC] border-[#F4DCB0] text-[#7B4D16]'
-          }`}>
+        {/* Find ID Email Sent Guidance Banner (No OTP code exposed) */}
+        {activeTab === 'find_id' && findIdNotice && !isFindIdVerified && (
+          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
             <div className="flex items-start gap-2.5">
-              <Mail className={`w-4 h-4 shrink-0 mt-0.5 ${
-                emailAlert.sentRealEmail ? 'text-[#2D6A4F]' : 'text-[#DF612D]'
-              }`} />
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
               <div className="flex-1">
                 <div className="font-bold flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    {emailAlert.sentRealEmail ? (
-                      <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        실제 이메일 발송 완료 ({emailAlert.senderEmail})
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[#DF612D]">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        대표 메일({emailAlert.senderEmail}) 본인인증 번호
-                      </span>
-                    )}
+                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    본인확인 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
-                    onClick={() => setEmailAlert(null)}
+                    onClick={() => setFindIdNotice(null)}
                     className="text-stone-400 hover:text-stone-700 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-
                 <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
                   <p>
-                    <strong>발신:</strong> <span className="font-mono text-[#19221C]">{emailAlert.senderEmail}</span>
-                    <span className="mx-1 text-stone-300">|</span>
-                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{emailAlert.email}</span>
+                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{findIdNotice.email}</span>
                   </p>
-                  {emailAlert.sentRealEmail ? (
-                    <p className="text-[#2D6A4F] font-medium pt-0.5">
-                      수신함(또는 스팸함)을 확인하여 6자리 인증번호를 확인해 주세요.
-                    </p>
-                  ) : (
-                    <p className="text-stone-600 text-[10px] leading-relaxed pt-0.5">
-                      {emailAlert.message || '구글 16자리 앱 비밀번호 설정 확인 중입니다. 원활한 진행을 위해 화면에 인증번호를 즉시 제공해 드립니다.'}
-                    </p>
-                  )}
+                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                    {findIdNotice.message}
+                  </p>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div className="mt-2 inline-flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-xl border border-stone-200 shadow-xs">
-                  <span className="text-[11px] text-stone-600 font-medium">인증번호:</span>
-                  <span className="font-mono font-extrabold text-sm tracking-widest text-[#DF612D]">
-                    {emailAlert.code}
+        {/* Reset Password Email Sent Guidance Banner (No OTP code exposed) */}
+        {activeTab === 'reset_password' && resetPwNotice && !isResetPwVerified && (
+          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
+            <div className="flex items-start gap-2.5">
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
+              <div className="flex-1">
+                <div className="font-bold flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    비밀번호 재설정 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (activeTab === 'find_id') setFindIdInputCode(emailAlert.code);
-                      if (activeTab === 'reset_password') setResetPwInputCode(emailAlert.code);
-                    }}
-                    className="text-[10px] font-bold text-[#DF612D] bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded-md transition-colors ml-1 cursor-pointer"
+                    onClick={() => setResetPwNotice(null)}
+                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
                   >
-                    코드 자동 입력
+                    <X className="w-3.5 h-3.5" />
                   </button>
+                </div>
+                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                  <p>
+                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{resetPwNotice.email}</span>
+                  </p>
+                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                    {resetPwNotice.message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -893,18 +1010,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
 
+              {/* Remember Me Checkbox (Default: unchecked) */}
+              <div className="flex items-center justify-between px-1">
+                <label className="inline-flex items-center gap-2 text-xs text-stone-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-stone-300 text-[#DF612D] focus:ring-[#DF612D] accent-[#DF612D] cursor-pointer"
+                  />
+                  <span className="font-medium">로그인 상태 유지</span>
+                </label>
+              </div>
+
               {/* Find ID / Reset PW Links */}
               <div className="flex items-center justify-between text-xs text-stone-500 pt-0.5 px-1">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => {
-                      setActiveTab('find_id');
                       setFindIdEmail('');
-                      setIsFindIdCodeSent(false);
-                      setIsFindIdVerified(false);
-                      setFoundUser(null);
-                      setFindIdError('');
+                      resetFindIdFlowState();
+                      switchAuthTab('find_id');
                     }}
                     className="hover:text-[#DF612D] font-medium transition-colors cursor-pointer text-[11px] sm:text-xs"
                   >
@@ -914,13 +1041,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setActiveTab('reset_password');
-                      setResetPwUsername(loginId);
-                      setResetPwEmail('');
-                      setIsResetPwCodeSent(false);
-                      setIsResetPwVerified(false);
-                      setResetPwSuccess(false);
-                      setResetPwError('');
+                      resetPasswordFlowState(true);
+                      switchAuthTab('reset_password');
                     }}
                     className="hover:text-[#DF612D] font-medium transition-colors cursor-pointer text-[11px] sm:text-xs"
                   >
@@ -931,7 +1053,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveTab('signup');
+                    switchAuthTab('signup');
                     setSignupError('');
                   }}
                   className="text-[#DF612D] font-semibold hover:underline cursor-pointer text-xs"
@@ -1230,7 +1352,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-stone-200">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('login')}
+                  onClick={() => switchAuthTab('login')}
                   className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 font-medium cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -1260,7 +1382,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={findIdEmail}
                           onChange={(e) => {
                             setFindIdEmail(e.target.value);
-                            setIsFindIdCodeSent(false);
+                            if (isFindIdCodeSent) {
+                              resetFindIdFlowState();
+                            }
                           }}
                           placeholder="가입한 이메일을 입력하세요"
                           className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
@@ -1269,10 +1393,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <button
                         type="button"
                         onClick={handleSendFindIdCode}
-                        disabled={isSendingEmail}
+                        disabled={isSendingFindIdOtp || (isFindIdCodeSent && findIdResendCooldown > 0)}
                         className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
-                        {isSendingEmail ? '발송 중...' : isFindIdCodeSent ? '인증번호 재발송' : '인증번호 발송'}
+                        {isSendingFindIdOtp
+                          ? '발송 중...'
+                          : isFindIdCodeSent
+                            ? findIdResendCooldown > 0
+                              ? `재발송 (${findIdResendCooldown}s)`
+                              : '재발송'
+                            : '인증번호 발송'}
                       </button>
                     </div>
                   </div>
@@ -1290,18 +1420,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <div className="flex gap-2">
                         <input
                           type="text"
+                          inputMode="numeric"
                           maxLength={6}
                           value={findIdInputCode}
-                          onChange={(e) => setFindIdInputCode(e.target.value)}
+                          onChange={(e) => setFindIdInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
                           className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyFindIdCode}
-                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer"
+                          disabled={isVerifyingFindIdOtp}
+                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
                         >
-                          인증 확인
+                          {isVerifyingFindIdOtp ? '확인 중...' : '인증 확인'}
                         </button>
                       </div>
                     </div>
@@ -1345,15 +1477,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100">
-                        <span className="text-stone-500">이름:</span>
-                        <span className="font-medium text-stone-800">{foundUser?.name}</span>
-                      </div>
+                      {foundUser?.name && (
+                        <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100">
+                          <span className="text-stone-500">이름:</span>
+                          <span className="font-medium text-stone-800">{foundUser.name}</span>
+                        </div>
+                      )}
 
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-stone-500">가입 일자:</span>
-                        <span className="font-medium text-stone-800">{foundUser?.createdAt}</span>
-                      </div>
+                      {foundUser?.createdAt && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-stone-500">가입 일자:</span>
+                          <span className="font-medium text-stone-800">{foundUser.createdAt}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1362,7 +1498,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="button"
                       onClick={() => {
                         if (foundUser) setLoginId(foundUser.username);
-                        setActiveTab('login');
+                        switchAuthTab('login');
                       }}
                       className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                     >
@@ -1372,14 +1508,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (foundUser) {
-                          setResetPwUsername(foundUser.username);
-                          setResetPwEmail(foundUser.email);
-                        }
-                        setActiveTab('reset_password');
-                        setIsResetPwCodeSent(false);
-                        setIsResetPwVerified(false);
-                        setResetPwSuccess(false);
+                        const verifiedEmail = foundUser?.email || findIdEmail.trim();
+                        resetPasswordFlowState(false);
+                        setResetPwEmail(verifiedEmail);
+                        switchAuthTab('reset_password');
                       }}
                       className="w-full py-2.5 bg-white hover:bg-stone-50 text-stone-700 border border-stone-300 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
                     >
@@ -1397,7 +1529,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-stone-200">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('login')}
+                  onClick={() => switchAuthTab('login')}
                   className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 font-medium cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -1413,27 +1545,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               )}
 
-              {/* Step 1 & 2: Verify ID & Email */}
+              {/* Step 1 & 2: Email & OTP Verification */}
               {!isResetPwVerified ? (
                 <div className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
-                      아이디 (ID)
-                    </label>
-                    <div className="relative">
-                      <UserIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
-                      <input
-                        type="text"
-                        value={resetPwUsername}
-                        onChange={(e) => setResetPwUsername(e.target.value)}
-                        placeholder="가입한 아이디 입력"
-                        className="w-full pl-10 pr-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    <label className="block text-xs font-semibold text-stone-700 mb-1.5">
                       가입 이메일 주소
                     </label>
                     <div className="flex gap-2">
@@ -1444,19 +1560,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={resetPwEmail}
                           onChange={(e) => {
                             setResetPwEmail(e.target.value);
-                            setIsResetPwCodeSent(false);
+                            if (isResetPwCodeSent) {
+                              resetPasswordFlowState(false);
+                            }
                           }}
                           placeholder="calgary@example.com"
-                          className="w-full pl-10 pr-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                          className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleSendResetPwCode}
-                        disabled={isSendingEmail}
+                        disabled={isSendingResetPwOtp || (isResetPwCodeSent && resetPwResendCooldown > 0)}
                         className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
-                        {isSendingEmail ? '발송 중...' : isResetPwCodeSent ? '인증번호 재발송' : '인증번호 발송'}
+                        {isSendingResetPwOtp
+                          ? '발송 중...'
+                          : isResetPwCodeSent
+                            ? resetPwResendCooldown > 0
+                              ? `재발송 (${resetPwResendCooldown}s)`
+                              : '재발송'
+                            : '인증번호 발송'}
                       </button>
                     </div>
                   </div>
@@ -1474,25 +1598,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <div className="flex gap-2">
                         <input
                           type="text"
+                          inputMode="numeric"
                           maxLength={6}
                           value={resetPwInputCode}
-                          onChange={(e) => setResetPwInputCode(e.target.value)}
+                          onChange={(e) => setResetPwInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
                           className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyResetPwCode}
-                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer"
+                          disabled={isVerifyingResetPwOtp}
+                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
                         >
-                          인증 확인
+                          {isVerifyingResetPwOtp ? '확인 중...' : '인증 확인'}
                         </button>
                       </div>
                     </div>
                   )}
 
                   <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200">
-                    💡 회원 본인 확인을 위해 아이디와 가입된 이메일을 모두 입력 후 인증번호를 발급받으세요.
+                    💡 회원가입 시 등록하신 이메일 주소를 입력하시면 비밀번호 재설정용 6자리 인증번호가 발송됩니다.
                   </p>
                 </div>
               ) : !resetPwSuccess ? (
@@ -1500,7 +1626,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-medium">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>본인인증 완료 (@{resetPwUsername}). 새 비밀번호를 설정하세요.</span>
+                    <span>이메일 본인인증 완료 ({resetPwEmail.trim()}). 새 비밀번호를 설정하세요.</span>
                   </div>
 
                   <div>
@@ -1513,7 +1639,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="최소 6자 이상"
+                        placeholder="8~16자 영문/숫자/특수문자"
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
                       />
                     </div>
@@ -1535,11 +1661,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                   </div>
 
+                  <p className="text-[11px] text-stone-500">
+                    비밀번호는 <strong>8~16자</strong>로 <strong>영문, 숫자, 특수문자</strong>를 반드시 모두 포함해야 합니다.
+                  </p>
+
                   <button
                     type="submit"
-                    className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                    disabled={isUpdatingResetPw}
+                    className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    새 비밀번호로 재설정 완료
+                    {isUpdatingResetPw ? '비밀번호 변경 중...' : '새 비밀번호로 재설정 완료'}
                   </button>
                 </form>
               ) : (
@@ -1553,20 +1684,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       비밀번호가 안전하게 변경되었습니다!
                     </h4>
                     <p className="text-xs text-stone-600 mt-1">
-                      새로 설정하신 비밀번호로 즉시 로그인하여 서비스를 이용하실 수 있습니다.
+                      임시 복구 세션은 안전하게 종료되었습니다. 새로 설정하신 비밀번호로 로그인해 주세요.
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setLoginId(resetPwUsername);
-                      setLoginPassword(newPassword);
-                      setActiveTab('login');
+                      resetPasswordFlowState(true);
+                      setLoginPassword('');
+                      switchAuthTab('login');
                     }}
                     className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                   >
-                    로그인하러 가기
+                    로그인 화면으로 이동
                   </button>
                 </div>
               )}
