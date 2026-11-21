@@ -167,20 +167,20 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs overflow-y-auto">
       <div 
-        className="relative w-full max-w-3xl bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-auto sm:my-6 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-3xl bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-auto sm:my-6 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col min-w-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-[#191919] text-[#FBF9E9] border-b border-[#191919] flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 bg-[#191919] text-[#FBF9E9] border-b border-[#191919] flex-shrink-0 gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             <div className="w-8 h-8 rounded-lg bg-[#FFE57E] text-[#191919] flex items-center justify-center shrink-0">
               <Plus className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h2 className="text-sm sm:text-base font-extrabold text-[#FBF9E9] truncate">
                 새 독서모임 개설하기
               </h2>
-              <p className="text-[10px] sm:text-[11px] text-[#FBF9E9]/70 truncate">
+              <p className="text-[10px] sm:text-[11px] text-[#FBF9E9]/70 leading-snug break-words">
                 운영자 및 인증 호스트를 위한 실시간 모임 등록 시스템입니다.
               </p>
             </div>
@@ -188,26 +188,26 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#FBF9E9]/80 hover:text-[#FBF9E9] transition-colors cursor-pointer shrink-0 ml-2"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#FBF9E9]/80 hover:text-[#FBF9E9] transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Form */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 space-y-4 sm:space-y-5 min-w-0">
           {formError && (
-            <div className="p-3 bg-[#F16B47]/15 border border-[#F16B47]/40 text-[#191919] rounded-xl text-xs font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#F16B47] shrink-0" />
-              <span>{formError}</span>
+            <div className="p-3 bg-[#F16B47]/15 border border-[#F16B47]/40 text-[#191919] rounded-xl text-xs font-semibold flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-[#F16B47] shrink-0 mt-0.5" />
+              <span className="min-w-0 flex-1 break-words">{formError}</span>
             </div>
           )}
 
           {/* Basic Book Info */}
-          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+          <div className="bg-[#FFFDF4] rounded-2xl p-3.5 sm:p-5 border border-[#191919]/15 space-y-4 min-w-0">
             <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-[#F16B47]" />
-              도서 및 모임 기본 정보
+              <BookOpen className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
+              <span>도서 및 모임 기본 정보</span>
             </h3>
 
             <div className="space-y-3 text-xs">
@@ -275,12 +275,12 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                 </div>
 
                 {/* Automatically Determined Host Info (No manual typing required) */}
-                <div>
+                <div className="min-w-0">
                   <label className="block font-bold text-[#191919]/80 mb-1">
                     담당 호스트 (로그인 계정 자동 지정)
                   </label>
-                  <div className="p-2 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 truncate">
+                  <div className="p-2 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 flex items-center justify-between gap-2 text-xs min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="w-6 h-6 rounded-md bg-[#FFE57E] text-[#191919] flex items-center justify-center shrink-0">
                         <UserCheck className="w-3.5 h-3.5" />
                       </div>
@@ -288,7 +288,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                         {effectiveHostName}
                       </span>
                     </div>
-                    <span className="text-[10px] font-extrabold bg-[#B9D8E6] text-[#191919] px-2 py-0.5 rounded-md shrink-0">
+                    <span className="text-[10px] font-extrabold bg-[#B9D8E6] text-[#191919] px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
                       자동 연동
                     </span>
                   </div>
@@ -311,17 +311,17 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
               </div>
 
               {/* Cover Image Picker & Custom Image Upload */}
-              <div className="space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="block font-bold text-[#191919]/80">
+              <div className="space-y-2.5 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="block font-bold text-[#191919]/80 min-w-0">
                     도서 커버 이미지 선택 및 직접 업로드 *
                   </label>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-[11px] font-extrabold cursor-pointer transition-colors"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-[11px] font-extrabold cursor-pointer transition-colors shrink-0"
                   >
-                    <Upload className="w-3.5 h-3.5" />
+                    <Upload className="w-3.5 h-3.5 shrink-0" />
                     <span>원하는 이미지 직접 업로드</span>
                   </button>
                   <input
@@ -334,25 +334,30 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                 </div>
 
                 {customImageName && (
-                  <div className="p-2.5 bg-[#B9D8E6]/35 rounded-lg border border-[#191919]/20 flex items-center justify-between text-xs text-[#191919]">
-                    <span className="truncate">업로드된 맞춤 이미지: <strong>{customImageName}</strong></span>
-                    <span className="text-[10px] font-extrabold bg-[#FFE57E] text-[#191919] px-2 py-0.5 rounded-md">적용 완료</span>
+                  <div className="p-2.5 bg-[#B9D8E6]/35 rounded-lg border border-[#191919]/20 flex items-center justify-between gap-2 text-xs text-[#191919] min-w-0">
+                    <span className="truncate min-w-0 flex-1">업로드된 맞춤 이미지: <strong>{customImageName}</strong></span>
+                    <span className="text-[10px] font-extrabold bg-[#FFE57E] text-[#191919] px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">적용 완료</span>
                   </div>
                 )}
 
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-22 rounded-lg overflow-hidden border-2 border-[#F16B47] flex-shrink-0 relative group bg-[#FBF9E9]">
-                    <img src={coverImage} alt="Cover Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-[#191919]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-[9px] text-[#FFE57E] font-extrabold">현재 적용</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full min-w-0">
+                  <div className="flex items-center gap-3 sm:block shrink-0 min-w-0">
+                    <div className="w-16 h-22 rounded-lg overflow-hidden border-2 border-[#F16B47] flex-shrink-0 relative group bg-[#FBF9E9]">
+                      <img src={coverImage} alt="Cover Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-[#191919]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="text-[9px] text-[#FFE57E] font-extrabold">현재 적용</span>
+                      </div>
                     </div>
+                    <p className="sm:hidden text-[11px] text-[#191919]/65 leading-relaxed flex-1 min-w-0">
+                      원하는 도서 표지 사진을 직접 업로드하거나, 아래 기본 프리셋 중에서 선택할 수 있습니다.
+                    </p>
                   </div>
 
-                  <div className="flex-1">
-                    <p className="text-[11px] text-[#191919]/65 mb-1.5">
+                  <div className="flex-1 min-w-0 w-full">
+                    <p className="hidden sm:block text-[11px] text-[#191919]/65 mb-1.5">
                       컴퓨터나 모바일에서 원하는 도서 표지 사진을 직접 업로드하거나, 아래 기본 프리셋 중에서 선택할 수 있습니다.
                     </p>
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <div className="flex items-center gap-2 overflow-x-auto py-1 px-0.5 w-full max-w-full">
                       {PRESET_COVERS.map((url, i) => (
                         <div
                           key={i}
@@ -375,10 +380,10 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
           </div>
 
           {/* Calgary Venue & Schedule */}
-          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+          <div className="bg-[#FFFDF4] rounded-2xl p-3.5 sm:p-5 border border-[#191919]/15 space-y-4 min-w-0">
             <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#F16B47]" />
-              캘거리 모임 장소 및 일정 정보
+              <MapPin className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
+              <span>캘거리 모임 장소 및 일정 정보</span>
             </h3>
 
             <div className="text-xs">
@@ -430,9 +435,9 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-bold text-[#191919]/80 mb-1 flex items-center justify-between">
+                <label className="font-bold text-[#191919]/80 mb-1 flex items-center justify-between gap-2">
                   <span>진행 시간 설정 *</span>
-                  <Clock className="w-3.5 h-3.5 text-[#F16B47]" />
+                  <Clock className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
                 </label>
                 <select
                   value={['90분', '2시간', '2시간 30분', '3시간'].includes(duration) ? duration : 'custom'}
@@ -494,28 +499,28 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
           </div>
 
           {/* Discussion Topics & Pre-sharing Toggle */}
-          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+          <div className="bg-[#FFFDF4] rounded-2xl p-3.5 sm:p-5 border border-[#191919]/15 space-y-4 min-w-0">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#F16B47]" />
-                함께 나눌 발제 질문 설정
+                <Sparkles className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
+                <span>함께 나눌 발제 질문 설정</span>
               </h3>
             </div>
 
             {/* Toggle: Share discussion topics in advance or keep secret until session */}
-            <div className="bg-[#FBF9E9] p-3.5 rounded-xl border border-[#191919]/15 space-y-2.5">
+            <div className="bg-[#FBF9E9] p-3.5 rounded-xl border border-[#191919]/15 space-y-2.5 min-w-0">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
                   {shareDiscussionTopics ? (
-                    <Eye className="w-4 h-4 text-[#191919]" />
+                    <Eye className="w-4 h-4 text-[#191919] shrink-0 mt-0.5 sm:mt-0" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-[#F16B47]" />
+                    <EyeOff className="w-4 h-4 text-[#F16B47] shrink-0 mt-0.5 sm:mt-0" />
                   )}
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-extrabold text-[#191919] text-xs">
                       발제 질문 사전 공개 여부 선택
                     </p>
-                    <p className="text-[11px] text-[#191919]/65">
+                    <p className="text-[11px] text-[#191919]/65 leading-snug">
                       {shareDiscussionTopics
                         ? '모임 상세 페이지에 발제 질문을 사전에 공개합니다.'
                         : '모임 상세 페이지에서 발제 질문을 숨기며, 당일 현장에서 함께 공개합니다.'}
@@ -580,21 +585,21 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
           </div>
 
           {/* Submit Footer */}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-[#FFFDF4] hover:bg-[#191919]/5 border border-[#191919]/20 text-xs font-bold text-[#191919] cursor-pointer transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FFFDF4] hover:bg-[#191919]/5 border border-[#191919]/20 text-xs font-bold text-[#191919] cursor-pointer transition-colors text-center"
             >
               취소
             </button>
 
             <button
               type="submit"
-              className="px-7 py-3 rounded-xl bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 text-xs sm:text-sm font-extrabold transition-colors cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto justify-center px-7 py-3 rounded-xl bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 text-xs sm:text-sm font-extrabold transition-colors cursor-pointer flex items-center gap-2"
             >
               <span>모임 등록 완료하기</span>
-              <Check className="w-4 h-4" />
+              <Check className="w-4 h-4 shrink-0" />
             </button>
           </div>
         </form>

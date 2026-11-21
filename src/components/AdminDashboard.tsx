@@ -218,61 +218,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activeRSVPs = rsvps.filter((r) => r.status === 'confirmed').length;
 
   return (
-    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col">
+    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col overflow-x-clip">
       {/* Top Admin Navigation Header */}
       <header className="bg-[#191919] text-[#FBF9E9] sticky top-0 z-40 border-b border-[#191919]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <div className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#FBF9E9]">
+              <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-[#FBF9E9]">
                 리도라
               </span>
               <span className="font-display-en text-[10px] sm:text-xs text-[#FBF9E9]/60 font-bold tracking-widest uppercase hidden sm:inline">
                 READORA
               </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-[#FFE57E] px-2.5 py-1 rounded-md text-[11px] sm:text-xs text-[#191919] font-extrabold truncate">
-              <Crown className="w-3.5 h-3.5 text-[#191919] shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-[#FFE57E] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs text-[#191919] font-extrabold truncate">
+              <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#191919] shrink-0" />
               <span className="truncate">관리자 포털</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             <button
               onClick={onOpenCreateClub}
-              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] px-2.5 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-extrabold bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] px-2 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
               title="관리자가 직접 호스트로서 새 모임을 등록합니다"
             >
-              <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span>모임 개설</span>
             </button>
 
             {onOpenMyPage && (
               <button
                 onClick={onOpenMyPage}
-                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15 whitespace-nowrap"
                 title="마이페이지 (개인정보 및 참여 모임 관리)"
               >
-                <Users className="w-3.5 h-3.5 text-[#FFE57E]" />
+                <Users className="w-3.5 h-3.5 text-[#FFE57E] shrink-0" />
                 <span className="hidden sm:inline">마이페이지</span>
               </button>
             )}
 
             <button
               onClick={onSwitchToUserView}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15 whitespace-nowrap"
               title="사용자 화면으로 전환"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">사용자 화면</span>
             </button>
 
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#F16B47]/20 hover:bg-[#F16B47]/35 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-[#F16B47]/40"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#F16B47]/20 hover:bg-[#F16B47]/35 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-[#F16B47]/40 whitespace-nowrap"
               title="로그아웃"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">로그아웃</span>
             </button>
           </div>
@@ -412,12 +412,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
                 {/* Host Filter Toggle */}
-                <div className="flex items-center bg-[#FBF9E9] p-1 rounded-lg border border-[#191919]/15 text-xs">
+                <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center bg-[#FBF9E9] p-1 rounded-lg border border-[#191919]/15 text-xs">
                   <button
                     onClick={() => setClubHostFilter('all')}
-                    className={`px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer tabular-nums ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer tabular-nums text-center whitespace-nowrap ${
                       clubHostFilter === 'all'
                         ? 'bg-[#191919] text-[#FFE57E]'
                         : 'text-[#191919]/65 hover:text-[#191919]'
@@ -427,13 +427,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </button>
                   <button
                     onClick={() => setClubHostFilter('admin_host')}
-                    className={`px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer flex items-center gap-1 tabular-nums ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 tabular-nums whitespace-nowrap ${
                       clubHostFilter === 'admin_host'
                         ? 'bg-[#191919] text-[#FFE57E]'
                         : 'text-[#191919]/65 hover:text-[#191919]'
                     }`}
                   >
-                    <Crown className="w-3 h-3 text-[#F16B47]" />
+                    <Crown className="w-3 h-3 text-[#F16B47] shrink-0" />
                     <span>내 호스트 모임 ({adminClubsCount})</span>
                   </button>
                 </div>
@@ -453,9 +453,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {/* Create Club Button */}
                 <button
                   onClick={onOpenCreateClub}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <PlusCircle className="w-4 h-4 shrink-0" />
                   <span>호스트로서 새 모임 개설</span>
                 </button>
               </div>
@@ -482,14 +482,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full md:w-auto">
                 {onViewAutoCancelLogs && (
                   <button
                     onClick={onViewAutoCancelLogs}
-                    className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#FFFDF4] hover:bg-[#FBF9E9] border border-[#191919]/20 text-[#191919] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 tabular-nums"
+                    className="flex-1 md:flex-none px-3.5 py-2.5 sm:py-2 rounded-lg bg-[#FFFDF4] hover:bg-[#FBF9E9] border border-[#191919]/20 text-[#191919] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 tabular-nums whitespace-nowrap"
                     title="자동 발송된 취소 안내 메일 및 SMS 내역 확인"
                   >
-                    <Bell className="w-3.5 h-3.5 text-[#191919]/65" />
+                    <Bell className="w-3.5 h-3.5 text-[#191919]/65 shrink-0" />
                     <span>취소 알림/메일 내역 ({autoCancelLogsCount}건)</span>
                   </button>
                 )}
@@ -497,7 +497,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {onTriggerAutoCancellationCheck && (
                   <button
                     onClick={onTriggerAutoCancellationCheck}
-                    className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 md:flex-none px-3.5 py-2.5 sm:py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
                     title="현재 등록된 모임 중 24시간 이내 최소 4명 미달 모임을 즉시 점검하여 자동 취소 처리합니다"
                   >
                     <span>24시간 자동 취소 즉시 점검</span>
@@ -528,7 +528,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {/* Top Club Header - Clicking opens full club details */}
                       <div 
                         onClick={() => onSelectClubDetail(club)}
-                        className="p-5 flex gap-4 border-b border-[#191919]/10 cursor-pointer group hover:bg-[#FBF9E9]/70 transition-colors"
+                        className="p-4 sm:p-5 flex gap-3 sm:gap-4 border-b border-[#191919]/10 cursor-pointer group hover:bg-[#FBF9E9]/70 transition-colors"
                         title="클릭하여 모임 상세 정보 보기"
                       >
                         <div className="relative shrink-0">
@@ -536,7 +536,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             src={club.coverImage}
                             alt={club.bookTitle}
                             referrerPolicy="no-referrer"
-                            className="w-20 h-28 object-cover rounded-lg border border-[#191919]/15 group-hover:scale-102 transition-transform"
+                            className="w-16 h-24 sm:w-20 sm:h-28 object-cover rounded-lg border border-[#191919]/15 group-hover:scale-102 transition-transform"
                           />
                           <div className="absolute inset-0 bg-[#191919]/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                             <Eye className="w-5 h-5 text-[#FFE57E]" />
@@ -544,18 +544,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 flex-wrap">
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FBF9E9] text-[#191919] border border-[#191919]/15">
                               {club.category}
                             </span>
 
                             {isManagedByAdmin ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#191919] bg-[#FFE57E] px-2 py-0.5 rounded-md">
-                                <Crown className="w-3 h-3 text-[#191919]" />
+                                <Crown className="w-3 h-3 text-[#191919] shrink-0" />
                                 관리자 직영 호스트
                               </span>
                             ) : (
-                              <span className="text-[11px] text-[#191919]/65 font-semibold">
+                              <span className="text-[11px] text-[#191919]/65 font-semibold truncate">
                                 호스트: {club.hostName}
                               </span>
                             )}
@@ -567,8 +567,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </div>
 
-                          <h3 className="font-extrabold text-base text-[#191919] truncate group-hover:text-[#F16B47] transition-colors flex items-center gap-1.5">
-                            <span>{club.bookTitle}</span>
+                          <h3 className="font-extrabold text-sm sm:text-base text-[#191919] truncate group-hover:text-[#F16B47] transition-colors flex items-center gap-1.5">
+                            <span className="truncate">{club.bookTitle}</span>
                             <Eye className="w-3.5 h-3.5 text-[#191919]/40 group-hover:text-[#F16B47] shrink-0" />
                           </h3>
                           <p className="text-xs text-[#191919]/65 mb-2 truncate">
@@ -576,12 +576,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </p>
 
                           <div className="text-[11px] text-[#191919]/75 space-y-0.5">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-[#F16B47]" />
-                              <span className="tabular-nums">{club.dateTime}</span>
+                            <div className="flex items-center gap-1 min-w-0">
+                              <Calendar className="w-3 h-3 text-[#F16B47] shrink-0" />
+                              <span className="tabular-nums truncate">{club.dateTime}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-[#191919]/45" />
+                            <div className="flex items-center gap-1 min-w-0">
+                              <MapPin className="w-3 h-3 text-[#191919]/45 shrink-0" />
                               <span className="truncate">{club.venueName}</span>
                             </div>
                           </div>
@@ -589,13 +589,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
 
                       {/* Status Management Bar (Only 모집중/마감임박/마감/취소 - No seat numbers) */}
-                      <div className="p-4 bg-[#FBF9E9] border-b border-[#191919]/10 flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#191919]/75">모임 상태:</span>
+                      <div className="p-3.5 sm:p-4 bg-[#FBF9E9] border-b border-[#191919]/10 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-xs font-bold text-[#191919]/75 shrink-0">모임 상태:</span>
                           <select
                             value={club.status}
                             onChange={(e) => onUpdateClubStatus(club.id, e.target.value as any)}
-                            className={`text-xs px-3 py-1.5 rounded-lg border font-extrabold cursor-pointer transition-colors ${
+                            className={`text-xs px-2.5 sm:px-3 py-1.5 rounded-lg border font-extrabold cursor-pointer transition-colors min-w-0 max-w-full ${
                               club.status === 'open'
                                 ? 'bg-[#B9D8E6] text-[#191919] border-[#191919]/25'
                                 : club.status === 'almost_full'
@@ -614,7 +614,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                         {onDeleteClub && (
                           confirmDeleteClubId === club.id ? (
-                            <div className="inline-flex items-center gap-1.5">
+                            <div className="inline-flex items-center gap-1.5 shrink-0">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -637,7 +637,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteClubId(club.id)}
-                              className="p-1.5 text-[#191919]/45 hover:text-[#F16B47] rounded-lg hover:bg-[#F16B47]/10 transition-colors cursor-pointer"
+                              className="p-1.5 text-[#191919]/45 hover:text-[#F16B47] rounded-lg hover:bg-[#F16B47]/10 transition-colors cursor-pointer shrink-0"
                               title="모임 삭제"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -647,11 +647,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
 
                       {/* Minimum 4 people progress & discussion topic disclosure badge */}
-                      <div className="px-4 py-2.5 bg-[#FFFDF4] border-b border-[#191919]/10 flex items-center justify-between text-xs flex-wrap gap-2">
+                      <div className="px-3.5 sm:px-4 py-2.5 bg-[#FFFDF4] border-b border-[#191919]/10 flex items-center justify-between text-xs flex-wrap gap-2">
                         {isCancelled ? (
                           <div className="flex flex-col gap-1">
                             <span className="text-[#F16B47] font-extrabold flex items-center gap-1">
-                              <XCircle className="w-3.5 h-3.5" />
+                              <XCircle className="w-3.5 h-3.5 shrink-0" />
                               취소된 모임 (전액 환불 완료)
                             </span>
                             {club.cancelReason && (
@@ -661,14 +661,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </div>
                         ) : club.currentSeats >= 4 ? (
-                          <span className="inline-flex items-center gap-1.5 font-extrabold text-[#191919] bg-[#B9D8E6]/60 px-2.5 py-1 rounded-md">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#B9D8E6]/60 px-2.5 py-1 rounded-md leading-snug">
                             <CheckCircle2 className="w-3.5 h-3.5 text-[#191919] shrink-0" />
-                            진행 확정 (최소 4명 충족 · 알림 발송 완료)
+                            <span>진행 확정 (최소 4명 충족 · 알림 발송 완료)</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-[#191919] bg-[#FFE57E]/60 px-2.5 py-1 rounded-md">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#191919] bg-[#FFE57E]/60 px-2.5 py-1 rounded-md leading-snug">
                             <Clock className="w-3.5 h-3.5 text-[#191919] shrink-0" />
-                            최소 4명 모집 중 (충족 시 신청자 자동 알림)
+                            <span>최소 4명 모집 중 (충족 시 신청자 자동 알림)</span>
                           </span>
                         )}
 
@@ -770,14 +770,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold">
-                    <th className="py-3.5 px-6">회원 정보 (이름/ID)</th>
-                    <th className="py-3.5 px-6 text-center">성별</th>
-                    <th className="py-3.5 px-6 text-center">연령</th>
-                    <th className="py-3.5 px-6">이메일 & 연락처</th>
-                    <th className="py-3.5 px-6">가입 일자</th>
-                    <th className="py-3.5 px-6">참여 모임 수</th>
-                    <th className="py-3.5 px-6 text-right">상세 참여 내역</th>
+                  <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold whitespace-nowrap">
+                    <th className="py-3.5 px-4 sm:px-6">회원 정보 (이름/ID)</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-center">성별</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-center">연령</th>
+                    <th className="py-3.5 px-4 sm:px-6">이메일 & 연락처</th>
+                    <th className="py-3.5 px-4 sm:px-6">가입 일자</th>
+                    <th className="py-3.5 px-4 sm:px-6">참여 모임 수</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-right">상세 참여 내역</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#191919]/10">
@@ -787,8 +787,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     const age = calculateAgeFromBirthDate(user.birthDate);
 
                     return (
-                      <tr key={user.id} className="hover:bg-[#FBF9E9]/60 transition-colors">
-                        <td className="py-4 px-6">
+                      <tr key={user.id} className="hover:bg-[#FBF9E9]/60 transition-colors whitespace-nowrap">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#FBF9E9] shrink-0 border border-[#191919]/20">
                               {user.avatar ? (
@@ -813,7 +813,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </td>
 
-                        <td className="py-4 px-6 text-center">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
                             user.gender === '여성'
                               ? 'bg-[#FFE57E]/45 text-[#191919] border-[#191919]/20'
@@ -825,7 +825,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </span>
                         </td>
 
-                        <td className="py-4 px-6 text-center">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center">
                           {age !== null ? (
                             <div className="inline-flex flex-col items-center">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#FBF9E9] text-[#191919] border border-[#191919]/20 tabular-nums">
@@ -842,27 +842,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           )}
                         </td>
 
-                        <td className="py-4 px-6">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6">
                           <div className="text-[#191919] font-mono text-[11px] flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-[#191919]/45" />
+                            <Mail className="w-3 h-3 text-[#191919]/45 shrink-0" />
                             <span>{user.email}</span>
                           </div>
                           {user.phone && user.phone !== '미등록' && (
                             <div className="text-[#191919]/65 text-[11px] font-mono mt-0.5 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-[#191919]/45" />
+                              <Phone className="w-3 h-3 text-[#191919]/45 shrink-0" />
                               <span>{user.phone}</span>
                             </div>
                           )}
                         </td>
 
-                        <td className="py-4 px-6">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6">
                           <div className="text-[#191919]/75 font-medium flex items-center gap-1 text-[11px] tabular-nums">
-                            <CalendarDays className="w-3 h-3 text-[#191919]/45" />
+                            <CalendarDays className="w-3 h-3 text-[#191919]/45 shrink-0" />
                             <span>{user.createdAt}</span>
                           </div>
                         </td>
 
-                        <td className="py-4 px-6">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6">
                           <span className={`px-2.5 py-1 rounded-md font-extrabold text-[11px] tabular-nums ${
                             userRSVPs.length > 0 
                               ? 'bg-[#B9D8E6] text-[#191919]' 
@@ -872,7 +872,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </span>
                         </td>
 
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-right">
                           <button
                             onClick={() => setSelectedMemberForDetail(user)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FFE57E]/50 hover:bg-[#FFE57E] text-[#191919] border border-[#191919]/15 font-extrabold text-xs transition-colors cursor-pointer tabular-nums"
@@ -905,11 +905,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <div className="flex items-center bg-[#FBF9E9] p-1 rounded-lg border border-[#191919]/15 text-xs">
                   <button
                     onClick={() => setAnalyticsPeriod('daily')}
-                    className={`px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer whitespace-nowrap ${
                       analyticsPeriod === 'daily'
                         ? 'bg-[#191919] text-[#FFE57E]'
                         : 'text-[#191919]/65 hover:text-[#191919]'
@@ -919,7 +919,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </button>
                   <button
                     onClick={() => setAnalyticsPeriod('monthly')}
-                    className={`px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer whitespace-nowrap ${
                       analyticsPeriod === 'monthly'
                         ? 'bg-[#191919] text-[#FFE57E]'
                         : 'text-[#191919]/65 hover:text-[#191919]'
@@ -931,7 +931,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <button
                   onClick={handleRefreshAnalytics}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/10 text-[#191919] border border-[#191919]/20 text-xs font-bold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/10 text-[#191919] border border-[#191919]/20 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
                   title="실시간 페이지뷰 갱신"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -1087,8 +1087,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               {/* Date Inputs + Summary Bar */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-2 w-full sm:w-auto">
                   <div className="w-full sm:w-44">
                     <label className="block text-[11px] font-bold text-[#191919]/65 mb-1">시작일</label>
                     <input
@@ -1098,7 +1098,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="w-full text-xs font-bold px-3 py-2 rounded-lg border border-[#191919]/20 bg-[#FBF9E9] text-[#191919] focus:outline-none focus:border-[#191919]"
                     />
                   </div>
-                  <span className="text-[#191919]/45 font-extrabold self-end pb-2">~</span>
+                  <span className="hidden sm:inline text-[#191919]/45 font-extrabold self-end pb-2">~</span>
                   <div className="w-full sm:w-44">
                     <label className="block text-[11px] font-bold text-[#191919]/65 mb-1">종료일</label>
                     <input
@@ -1411,13 +1411,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold">
-                      <th className="py-3.5 px-6">{analyticsPeriod === 'daily' ? '날짜 / 요일' : '연도 / 월'}</th>
-                      <th className="py-3.5 px-6">페이지뷰 (PV)</th>
-                      <th className="py-3.5 px-6">순방문자 (UV)</th>
-                      <th className="py-3.5 px-6">모임 상세 조회수</th>
-                      <th className="py-3.5 px-6">세션당 평균 PV</th>
-                      <th className="py-3.5 px-6 text-right">구분</th>
+                    <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold whitespace-nowrap">
+                      <th className="py-3.5 px-4 sm:px-6">{analyticsPeriod === 'daily' ? '날짜 / 요일' : '연도 / 월'}</th>
+                      <th className="py-3.5 px-4 sm:px-6">페이지뷰 (PV)</th>
+                      <th className="py-3.5 px-4 sm:px-6">순방문자 (UV)</th>
+                      <th className="py-3.5 px-4 sm:px-6">모임 상세 조회수</th>
+                      <th className="py-3.5 px-4 sm:px-6">세션당 평균 PV</th>
+                      <th className="py-3.5 px-4 sm:px-6 text-right">구분</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#191919]/10">
@@ -1430,11 +1430,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           return (
                             <tr
                               key={row.date}
-                              className={`hover:bg-[#FBF9E9]/60 transition-colors ${
+                              className={`hover:bg-[#FBF9E9]/60 transition-colors whitespace-nowrap ${
                                 row.isToday ? 'bg-[#FFE57E]/25 font-semibold' : ''
                               }`}
                             >
-                              <td className="py-4 px-6 flex items-center gap-2">
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 flex items-center gap-2">
                                 {row.isToday && (
                                   <span className="w-2 h-2 rounded-full bg-[#F16B47] shrink-0" />
                                 )}
@@ -1452,13 +1452,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   </span>
                                 )}
                               </td>
-                              <td className="py-4 px-6 font-extrabold text-[#191919] tabular-nums">
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 font-extrabold text-[#191919] tabular-nums">
                                 {effectivePV.toLocaleString()}회
                               </td>
-                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
-                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
-                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
-                              <td className="py-4 px-6 text-right">
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
+                              <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-right">
                                 {row.isToday ? (
                                   <span className="inline-block text-[11px] px-2.5 py-1 rounded-md font-extrabold bg-[#FFE57E] text-[#191919]">
                                     당일 실시간
@@ -1478,13 +1478,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         })
                     ) : (
                       monthlyStats.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-[#FBF9E9]/60 transition-colors">
-                          <td className="py-4 px-6 font-extrabold text-[#191919]">{row.date}</td>
-                          <td className="py-4 px-6 font-extrabold text-[#191919] tabular-nums">{row.pv.toLocaleString()}회</td>
-                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
-                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
-                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
-                          <td className="py-4 px-6 text-right">
+                        <tr key={idx} className="hover:bg-[#FBF9E9]/60 transition-colors whitespace-nowrap">
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 font-extrabold text-[#191919]">{row.date}</td>
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 font-extrabold text-[#191919] tabular-nums">{row.pv.toLocaleString()}회</td>
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
+                          <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-right">
                             <span className="inline-flex items-center gap-1 font-extrabold text-[#191919]">
                               <CheckCircle2 className="w-3.5 h-3.5 text-[#F16B47]" />
                               {row.growth}
@@ -1539,12 +1539,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               {/* Traffic Peak & Behavior */}
               <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 space-y-4">
-                <div className="flex items-center justify-between border-b border-[#191919]/10 pb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#191919]/10 pb-3">
                   <h3 className="font-extrabold text-sm text-[#191919] flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#F16B47]" />
+                    <Clock className="w-4 h-4 text-[#F16B47] shrink-0" />
                     <span>시간대별 유입 피크 & 접속 환경</span>
                   </h3>
-                  <span className="text-xs text-[#191919] font-extrabold flex items-center gap-1.5 bg-[#B9D8E6]/60 px-2.5 py-0.5 rounded-md">
+                  <span className="text-xs text-[#191919] font-extrabold flex items-center gap-1.5 bg-[#B9D8E6]/60 px-2.5 py-0.5 rounded-md whitespace-nowrap">
                     실시간 접속 집계 정상
                   </span>
                 </div>
@@ -1552,7 +1552,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="space-y-3 text-xs">
                   <div className="p-3.5 bg-[#FBF9E9] rounded-xl border border-[#191919]/15">
                     <div className="font-extrabold text-[#191919] mb-1 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#F16B47]" />
+                      <Sparkles className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
                       <span>저녁 독서 골든타임 (19:00 ~ 23:00)</span>
                     </div>
                     <p className="text-[#191919]/70 leading-relaxed text-[11px]">
@@ -1560,7 +1560,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-center">
                     <div className="p-3 rounded-xl bg-[#FBF9E9] border border-[#191919]/15">
                       <span className="text-[11px] text-[#191919]/60 block">모바일 접속</span>
                       <strong className="text-sm font-extrabold text-[#191919]">반응형 지원</strong>
@@ -1583,23 +1583,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL 1: MEMBER PARTICIPATION HISTORY MODAL (No calgaryYears) */}
       {selectedMemberForDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs">
           <div 
-            className="bg-[#FBF9E9] w-full max-w-2xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-[#FBF9E9] w-full max-w-2xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[94dvh] sm:max-h-[90vh] flex flex-col min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
+            <div className="p-4 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919] shrink-0">
               <button
                 onClick={() => setSelectedMemberForDetail(null)}
-                className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
                 aria-label="닫기"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-4 pr-8">
-                <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 pr-9">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0">
                   {selectedMemberForDetail.avatar ? (
                     <img
                       src={selectedMemberForDetail.avatar}
@@ -1608,18 +1608,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-xl font-extrabold text-[#FFE57E]">{selectedMemberForDetail.name.charAt(0)}</span>
+                    <span className="text-lg sm:text-xl font-extrabold text-[#FFE57E]">{selectedMemberForDetail.name.charAt(0)}</span>
                   )}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-xl font-extrabold text-[#FBF9E9]">{selectedMemberForDetail.name}</h3>
-                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#FFE57E] text-[#191919] font-extrabold font-mono">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-[#FBF9E9] break-words">{selectedMemberForDetail.name}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#FFE57E] text-[#191919] font-extrabold font-mono break-all">
                       @{selectedMemberForDetail.username}
                     </span>
                   </div>
-                  <div className="text-xs text-[#FBF9E9]/75 mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                  <div className="text-xs text-[#FBF9E9]/75 mt-1.5 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1">
                     <span>성별: <strong className="text-[#FBF9E9]">{selectedMemberForDetail.gender || '미입력'}</strong></span>
                     <span>
                       연령:{' '}
@@ -1639,7 +1639,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           : '미입력'}
                       </strong>
                     </span>
-                    <span>이메일: <strong className="font-mono text-[#FBF9E9]">{selectedMemberForDetail.email}</strong></span>
+                    <span className="break-all">이메일: <strong className="font-mono text-[#FBF9E9] break-all">{selectedMemberForDetail.email}</strong></span>
                     <span>가입일자: <strong className="text-[#FBF9E9] tabular-nums">{selectedMemberForDetail.createdAt}</strong></span>
                   </div>
                 </div>
@@ -1647,13 +1647,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal Body: Participation History */}
-            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden flex-1 space-y-4">
+              <div className="flex items-center justify-between gap-2">
                 <h4 className="font-extrabold text-sm text-[#191919] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#F16B47]" />
+                  <Calendar className="w-4 h-4 text-[#F16B47] shrink-0" />
                   <span>그동안 참여 및 신청한 독서모임 히스토리</span>
                 </h4>
-                <span className="text-xs font-bold text-[#191919]/65 tabular-nums">
+                <span className="text-xs font-bold text-[#191919]/65 tabular-nums shrink-0">
                   총 {getMemberRSVPs(selectedMemberForDetail).length}건
                 </span>
               </div>
@@ -1667,20 +1667,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {getMemberRSVPs(selectedMemberForDetail).map((r) => (
                     <div
                       key={r.id}
-                      className="p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] hover:border-[#191919]/35 transition-colors"
+                      className="p-3.5 sm:p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] hover:border-[#191919]/35 transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div>
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3 mb-2">
+                        <div className="min-w-0 flex-1">
                           <span className="text-[10px] font-extrabold text-[#F16B47] uppercase tracking-wide tabular-nums">
                             신청일시: {r.registeredAt}
                           </span>
-                          <h5 className="font-extrabold text-sm text-[#191919] mt-0.5">
+                          <h5 className="font-extrabold text-sm text-[#191919] mt-0.5 break-words">
                             《{r.bookTitle}》 {r.author}
                           </h5>
-                          <p className="text-xs text-[#191919]/65 mt-0.5">{r.clubTitle}</p>
+                          <p className="text-xs text-[#191919]/65 mt-0.5 break-words">{r.clubTitle}</p>
                         </div>
 
-                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold shrink-0 ${
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold shrink-0 self-start ${
                           r.status === 'confirmed'
                             ? 'bg-[#B9D8E6] text-[#191919]'
                             : 'bg-[#F16B47]/15 text-[#F16B47]'
@@ -1690,22 +1690,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
 
                       <div className="text-xs text-[#191919]/75 space-y-1 pt-2 border-t border-[#191919]/10">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3 h-3 text-[#191919]/45" />
-                          <span className="tabular-nums">모임 일시: <strong>{r.dateTime}</strong></span>
+                        <div className="flex items-start gap-2">
+                          <Calendar className="w-3 h-3 text-[#191919]/45 shrink-0 mt-0.5" />
+                          <span className="tabular-nums break-words">모임 일시: <strong>{r.dateTime}</strong></span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3 h-3 text-[#191919]/45" />
-                          <span>장소: {r.venueName}{r.venueAddress ? ` (${r.venueAddress})` : ''}</span>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-3 h-3 text-[#191919]/45 shrink-0 mt-0.5" />
+                          <span className="break-words">장소: {r.venueName}{r.venueAddress ? ` (${r.venueAddress})` : ''}</span>
                         </div>
                         {r.paymentMethod && (
-                          <div className="flex items-center gap-2 text-[#191919] tabular-nums">
-                            <CreditCard className="w-3 h-3 text-[#F16B47]" />
-                            <span>결제 수단: <strong>{r.paymentMethod}</strong> (CAD ${r.paymentAmountCAD || 15})</span>
+                          <div className="flex items-start gap-2 text-[#191919] tabular-nums">
+                            <CreditCard className="w-3 h-3 text-[#F16B47] shrink-0 mt-0.5" />
+                            <span className="break-words">결제 수단: <strong>{r.paymentMethod}</strong> (CAD ${r.paymentAmountCAD || 15})</span>
                           </div>
                         )}
                         {r.userNotes && (
-                          <div className="mt-1.5 p-2.5 bg-[#FBF9E9] rounded-lg border border-[#191919]/15 text-[11px] text-[#191919]">
+                          <div className="mt-1.5 p-2.5 bg-[#FBF9E9] rounded-lg border border-[#191919]/15 text-[11px] text-[#191919] break-words">
                             <span className="font-extrabold">작성한 독서 메모: </span>
                             {r.userNotes}
                           </div>
@@ -1732,40 +1732,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL 2: CLUB APPLICANTS ROSTER MODAL (Auto-recorded from payment) */}
       {selectedClubForApplicants && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs">
           <div 
-            className="bg-[#FBF9E9] w-full max-w-3xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-[#FBF9E9] w-full max-w-3xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[94dvh] sm:max-h-[90vh] flex flex-col min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
+            <div className="p-4 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919] shrink-0">
               <button
                 onClick={() => setSelectedClubForApplicants(null)}
-                className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
                 aria-label="닫기"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-start gap-4 pr-8">
+              <div className="flex items-start gap-3 sm:gap-4 pr-9">
                 <img
                   src={selectedClubForApplicants.coverImage}
                   alt={selectedClubForApplicants.bookTitle}
                   referrerPolicy="no-referrer"
-                  className="w-16 h-22 object-cover rounded-lg border border-white/20 shrink-0"
+                  className="w-14 h-20 sm:w-16 sm:h-22 object-cover rounded-lg border border-white/20 shrink-0"
                 />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFE57E] text-[#191919]">
                       {selectedClubForApplicants.category}
                     </span>
-                    <span className="text-xs text-[#FBF9E9]/75">
+                    <span className="text-[11px] sm:text-xs text-[#FBF9E9]/75">
                       신청 상태: {selectedClubForApplicants.status === 'open' ? '모집중' : selectedClubForApplicants.status === 'almost_full' ? '마감임박' : '마감'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-extrabold text-[#FBF9E9] truncate">{selectedClubForApplicants.bookTitle} 신청자 명단</h3>
-                  <p className="text-xs text-[#FBF9E9]/75 mt-0.5 truncate">{selectedClubForApplicants.title}</p>
-                  <p className="text-[11px] text-[#FBF9E9]/60 mt-1 tabular-nums">
+                  <h3 className="text-base sm:text-xl font-extrabold text-[#FBF9E9] break-words leading-snug">{selectedClubForApplicants.bookTitle} 신청자 명단</h3>
+                  <p className="text-xs text-[#FBF9E9]/75 mt-0.5 break-words">{selectedClubForApplicants.title}</p>
+                  <p className="text-[11px] text-[#FBF9E9]/60 mt-1 tabular-nums break-words">
                     {selectedClubForApplicants.dateTime} · {selectedClubForApplicants.venueName}
                   </p>
                 </div>
@@ -1773,18 +1773,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal Body: Applicants List */}
-            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden flex-1 space-y-4">
               {/* Notification & Minimum Threshold Banner */}
-              <div className="p-4 rounded-xl border border-[#191919]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF4]">
-                <div>
+              <div className="p-3.5 sm:p-4 rounded-xl border border-[#191919]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF4]">
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-extrabold text-[#191919]">진행 알림 시스템:</span>
                     {selectedClubForApplicants.currentSeats >= 4 ? (
-                       <span className="text-xs font-extrabold text-[#191919] bg-[#B9D8E6] px-2.5 py-0.5 rounded-md">
+                       <span className="text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#B9D8E6] px-2.5 py-0.5 rounded-md">
                         최소 인원(4명) 충족 · 진행 확정 알림 발송 완료
                       </span>
                     ) : (
-                      <span className="text-xs font-extrabold text-[#191919] bg-[#FFE57E] px-2.5 py-0.5 rounded-md">
+                      <span className="text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#FFE57E] px-2.5 py-0.5 rounded-md">
                         최소 인원(4명) 모집 중 · 충족 시 자동 알림 발송
                       </span>
                     )}
@@ -1802,7 +1802,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setBroadcastNotice(`'${selectedClubForApplicants.bookTitle}' 신청자 전원에게 진행 확정 안내(이메일 & SMS)를 성공적으로 재발송했습니다.`);
                       setTimeout(() => setBroadcastNotice(null), 3500);
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
+                    className="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
                   >
                     진행 확정 알림 전체 재발송
                   </button>
@@ -1827,14 +1827,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {getClubRSVPs(selectedClubForApplicants.id).map((applicant, idx) => (
                     <div
                       key={applicant.id}
-                      className="p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-3.5 sm:p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-lg bg-[#191919] text-[#FFE57E] font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5 tabular-nums">
                           {idx + 1}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="font-extrabold text-sm text-[#191919]">{applicant.participantName}</span>
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
                               applicant.status === 'confirmed'
@@ -1846,20 +1846,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
 
                           <div className="text-xs text-[#191919]/65 font-mono mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                            <span className="inline-flex items-center gap-1">
-                              <Mail className="w-3 h-3" /> {applicant.email}
+                            <span className="inline-flex items-center gap-1 break-all">
+                              <Mail className="w-3 h-3 shrink-0" /> {applicant.email}
                             </span>
                             <span className="inline-flex items-center gap-1">
-                              <Phone className="w-3 h-3" /> {applicant.phone}
+                              <Phone className="w-3 h-3 shrink-0" /> {applicant.phone}
                             </span>
                             <span className="inline-flex items-center gap-1 tabular-nums">
-                              <Clock className="w-3 h-3" /> 신청일: {applicant.registeredAt}
+                              <Clock className="w-3 h-3 shrink-0" /> 신청일: {applicant.registeredAt}
                             </span>
                           </div>
 
-                          <div className="mt-1.5 inline-flex items-center gap-2 text-xs text-[#191919] bg-[#FBF9E9] px-2.5 py-1 rounded-lg border border-[#191919]/15 tabular-nums">
-                            <CreditCard className="w-3.5 h-3.5 text-[#F16B47]" />
-                            <span>
+                          <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-[#191919] bg-[#FBF9E9] px-2.5 py-1 rounded-lg border border-[#191919]/15 tabular-nums max-w-full">
+                            <CreditCard className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
+                            <span className="break-words">
                               결제 수단: <strong>{applicant.paymentMethod || 'Interac e-Transfer'}</strong> (CAD ${applicant.paymentAmountCAD || selectedClubForApplicants.feeCAD})
                             </span>
                           </div>

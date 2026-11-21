@@ -126,7 +126,7 @@ export const ClubExplorer: React.FC<ClubExplorerProps> = ({
   return (
     <section
       id="explore-section"
-      className="py-16 sm:py-24 bg-[#FBF9E9] scroll-mt-20"
+      className="py-16 sm:py-24 bg-[#FBF9E9] scroll-mt-20 overflow-x-clip"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
@@ -140,7 +140,7 @@ export const ClubExplorer: React.FC<ClubExplorerProps> = ({
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* List / Card View Switcher */}
             <div className="inline-flex items-center p-1 rounded-lg bg-[#FFFDF4] border border-[#191919]/15">
               <button
@@ -314,7 +314,7 @@ export const ClubExplorer: React.FC<ClubExplorerProps> = ({
                           onSelectClub(club);
                         }
                       }}
-                      className="group py-5 px-3 sm:px-4 -mx-3 sm:-mx-4 rounded-lg hover:bg-[#FFFDF4] transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-start md:items-center"
+                      className="group py-5 px-2 sm:px-4 mx-0 sm:-mx-4 rounded-lg hover:bg-[#FFFDF4] transition-colors cursor-pointer grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-start md:items-center"
                     >
                       {/* Col 1: Book Cover Thumb + Club Title & Book */}
                       <div className="md:col-span-5 flex items-start gap-3.5 min-w-0">

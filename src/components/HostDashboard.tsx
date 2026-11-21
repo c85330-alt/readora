@@ -117,21 +117,21 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col">
+    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col overflow-x-clip">
       {/* Top Header */}
       <header className="bg-[#191919] text-[#FBF9E9] sticky top-0 z-40 border-b border-[#191919]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <div className="flex items-baseline gap-1.5 shrink-0">
-              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#FBF9E9]">
+              <span className="text-lg sm:text-2xl font-extrabold tracking-tight text-[#FBF9E9]">
                 리도라
               </span>
               <span className="font-display-en text-[10px] sm:text-xs text-[#FBF9E9]/60 font-bold tracking-widest uppercase hidden sm:inline">
                 READORA
               </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-[#FFE57E] px-2.5 py-1 rounded-md text-[11px] sm:text-xs text-[#191919] font-extrabold truncate">
-              <Crown className="w-3.5 h-3.5 text-[#191919] shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-[#FFE57E] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs text-[#191919] font-extrabold truncate">
+              <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#191919] shrink-0" />
               <span className="truncate">호스트 센터</span>
             </div>
             <div className="hidden lg:flex items-center gap-1.5 text-xs text-[#FBF9E9]/70">
@@ -142,42 +142,42 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             <button
               onClick={onOpenCreateClub}
-              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] px-2.5 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-extrabold bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] px-2 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
               title="새로운 독서 모임을 등록합니다"
             >
-              <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span>모임 개설</span>
             </button>
 
             {onOpenMyPage && (
               <button
                 onClick={onOpenMyPage}
-                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15 whitespace-nowrap"
                 title="마이페이지 (개인정보 및 참여 모임 관리)"
               >
-                <UserIcon className="w-3.5 h-3.5 text-[#FFE57E]" />
+                <UserIcon className="w-3.5 h-3.5 text-[#FFE57E] shrink-0" />
                 <span className="hidden sm:inline">마이페이지</span>
               </button>
             )}
 
             <button
               onClick={onSwitchToUserView}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15 whitespace-nowrap"
+              title="사용자 화면 둘러보기"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">사용자 화면 둘러보기</span>
-              <span className="sm:hidden">일반화면</span>
             </button>
 
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#F16B47]/20 hover:bg-[#F16B47]/35 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-[#F16B47]/40"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#F16B47]/20 hover:bg-[#F16B47]/35 text-[#FBF9E9] px-2 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-[#F16B47]/40 whitespace-nowrap"
               title="로그아웃"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline">로그아웃</span>
             </button>
           </div>
@@ -255,14 +255,14 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full md:w-auto">
             {onViewAutoCancelLogs && (
               <button
                 onClick={onViewAutoCancelLogs}
-                className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#FFFDF4] hover:bg-[#FBF9E9] border border-[#191919]/20 text-[#191919] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 tabular-nums"
+                className="flex-1 md:flex-none px-3.5 py-2.5 sm:py-2 rounded-lg bg-[#FFFDF4] hover:bg-[#FBF9E9] border border-[#191919]/20 text-[#191919] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 tabular-nums whitespace-nowrap"
                 title="발송된 취소 안내 메일 및 SMS 내역 조회"
               >
-                <Bell className="w-3.5 h-3.5 text-[#191919]/65" />
+                <Bell className="w-3.5 h-3.5 text-[#191919]/65 shrink-0" />
                 <span>취소 알림/메일 내역 ({autoCancelLogsCount}건)</span>
               </button>
             )}
@@ -270,7 +270,7 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
             {onTriggerAutoCancellationCheck && (
               <button
                 onClick={onTriggerAutoCancellationCheck}
-                className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 md:flex-none px-3.5 py-2.5 sm:py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
                 title="현재 시점 기준으로 24시간 이내 최소 인원 미달 모임을 즉시 점검하고 자동 취소 처리합니다"
               >
                 <span>24시간 자동 취소 즉시 점검</span>
@@ -359,18 +359,18 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                 >
                   <div>
                     {/* Club Header Info */}
-                    <div className="p-5 flex gap-4 border-b border-[#191919]/10">
+                    <div className="p-4 sm:p-5 flex gap-3 sm:gap-4 border-b border-[#191919]/10">
                       <img
                         src={club.coverImage}
                         alt={club.bookTitle}
                         referrerPolicy="no-referrer"
-                        className="w-20 h-28 object-cover rounded-lg border border-[#191919]/15 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                        className="w-16 h-24 sm:w-20 sm:h-28 object-cover rounded-lg border border-[#191919]/15 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => onSelectClubDetail(club)}
                         title="클릭하여 모임 상세 정보 보기"
                       />
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 flex-wrap">
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FBF9E9] text-[#191919] border border-[#191919]/15">
                             {club.category}
                           </span>
@@ -401,7 +401,7 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
 
                         <h3 
                           onClick={() => onSelectClubDetail(club)}
-                          className="font-extrabold text-base text-[#191919] truncate cursor-pointer hover:text-[#F16B47] transition-colors"
+                          className="font-extrabold text-sm sm:text-base text-[#191919] truncate cursor-pointer hover:text-[#F16B47] transition-colors"
                           title="클릭하여 모임 상세 정보 보기"
                         >
                           {club.bookTitle}
@@ -411,12 +411,12 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                         </p>
 
                         <div className="text-[11px] text-[#191919]/75 space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-[#F16B47]" />
-                            <span className="tabular-nums">{club.dateTime}</span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Calendar className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
+                            <span className="tabular-nums truncate">{club.dateTime}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-[#191919]/45" />
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <MapPin className="w-3.5 h-3.5 text-[#191919]/45 shrink-0" />
                             <span className="truncate">{club.venueName}</span>
                           </div>
                         </div>
@@ -424,11 +424,11 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                     </div>
 
                     {/* Minimum 4 people & Topic Status Bar */}
-                    <div className="px-4 py-2.5 bg-[#FBF9E9] border-b border-[#191919]/10 flex items-center justify-between text-xs flex-wrap gap-2">
+                    <div className="px-3.5 sm:px-4 py-2.5 bg-[#FBF9E9] border-b border-[#191919]/10 flex items-center justify-between text-xs flex-wrap gap-2">
                       {isCancelled ? (
                         <div className="flex flex-col gap-1">
                           <span className="text-[#F16B47] font-extrabold flex items-center gap-1">
-                            <XCircle className="w-3.5 h-3.5" />
+                            <XCircle className="w-3.5 h-3.5 shrink-0" />
                             취소된 모임 (전액 환불 완료)
                           </span>
                           {club.cancelReason && (
@@ -438,14 +438,14 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                           )}
                         </div>
                       ) : isConfirmed ? (
-                        <span className="inline-flex items-center gap-1.5 font-extrabold text-[#191919] bg-[#B9D8E6]/60 px-2.5 py-1 rounded-md tabular-nums">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#B9D8E6]/60 px-2.5 py-1 rounded-md tabular-nums leading-snug">
                           <CheckCircle2 className="w-3.5 h-3.5 text-[#191919] shrink-0" />
-                          진행 확정 (신청 {activeApplicants.length}명 · 최소 4명 충족)
+                          <span>진행 확정 (신청 {activeApplicants.length}명 · 최소 4명 충족)</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 font-bold text-[#191919] bg-[#FFE57E]/60 px-2.5 py-1 rounded-md tabular-nums">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#191919] bg-[#FFE57E]/60 px-2.5 py-1 rounded-md tabular-nums leading-snug">
                           <Clock className="w-3.5 h-3.5 text-[#191919] shrink-0" />
-                          최소 인원(4명) 모집 중 (현재 {activeApplicants.length}명 신청)
+                          <span>최소 인원(4명) 모집 중 (현재 {activeApplicants.length}명 신청)</span>
                         </span>
                       )}
 
@@ -509,42 +509,42 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
 
       {/* APPLICANTS ROSTER MODAL */}
       {selectedClubForApplicants && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs">
           <div 
-            className="bg-[#FBF9E9] w-full max-w-3xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-[#FBF9E9] w-full max-w-3xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[94dvh] sm:max-h-[90vh] flex flex-col min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
+            <div className="p-4 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919] shrink-0">
               <button
                 onClick={() => setSelectedClubForApplicants(null)}
-                className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
                 aria-label="닫기"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-start gap-4 pr-8">
+              <div className="flex items-start gap-3 sm:gap-4 pr-9">
                 <img
                   src={selectedClubForApplicants.coverImage}
                   alt={selectedClubForApplicants.bookTitle}
                   referrerPolicy="no-referrer"
-                  className="w-16 h-22 object-cover rounded-lg border border-white/20 shrink-0"
+                  className="w-14 h-20 sm:w-16 sm:h-22 object-cover rounded-lg border border-white/20 shrink-0"
                 />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFE57E] text-[#191919]">
                       {selectedClubForApplicants.category}
                     </span>
-                    <span className="text-xs text-[#FBF9E9]/75">
+                    <span className="text-[11px] sm:text-xs text-[#FBF9E9]/75">
                       상태: {selectedClubForApplicants.status === 'open' ? '모집중' : selectedClubForApplicants.status === 'almost_full' ? '마감임박' : selectedClubForApplicants.status === 'cancelled' ? '모임 취소' : '마감'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-extrabold text-[#FBF9E9] truncate">
+                  <h3 className="text-base sm:text-xl font-extrabold text-[#FBF9E9] break-words leading-snug">
                     {selectedClubForApplicants.bookTitle} 신청 회원 명단
                   </h3>
-                  <p className="text-xs text-[#FBF9E9]/75 mt-0.5 truncate">{selectedClubForApplicants.title}</p>
-                  <p className="text-[11px] text-[#FBF9E9]/60 mt-1 tabular-nums">
+                  <p className="text-xs text-[#FBF9E9]/75 mt-0.5 break-words">{selectedClubForApplicants.title}</p>
+                  <p className="text-[11px] text-[#FBF9E9]/60 mt-1 tabular-nums break-words">
                     {selectedClubForApplicants.dateTime} · {selectedClubForApplicants.venueName}
                   </p>
                 </div>
@@ -552,18 +552,18 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden flex-1 space-y-4">
               {/* Notification & Threshold Status */}
-              <div className="p-4 rounded-xl border border-[#191919]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF4]">
-                <div>
+              <div className="p-3.5 sm:p-4 rounded-xl border border-[#191919]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF4]">
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-extrabold text-[#191919]">진행 알림 시스템:</span>
                     {getClubRSVPs(selectedClubForApplicants.id).filter((r) => r.status === 'confirmed').length >= 4 ? (
-                      <span className="text-xs font-extrabold text-[#191919] bg-[#B9D8E6] px-2.5 py-0.5 rounded-md">
+                      <span className="text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#B9D8E6] px-2.5 py-0.5 rounded-md">
                         최소 인원(4명) 충족 · 진행 확정 알림 발송 완료
                       </span>
                     ) : (
-                      <span className="text-xs font-extrabold text-[#191919] bg-[#FFE57E] px-2.5 py-0.5 rounded-md">
+                      <span className="text-[11px] sm:text-xs font-extrabold text-[#191919] bg-[#FFE57E] px-2.5 py-0.5 rounded-md">
                         최소 인원(4명) 모집 중 · 충족 시 자동 알림 발송
                       </span>
                     )}
@@ -575,9 +575,9 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
 
                 <button
                   onClick={() => handleSendBroadcast(selectedClubForApplicants)}
-                  className="px-3.5 py-2 rounded-lg bg-[#F16B47] hover:bg-[#d95734] text-white text-xs font-extrabold shrink-0 transition-colors cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                  className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-[#F16B47] hover:bg-[#d95734] text-white text-xs font-extrabold shrink-0 transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="w-3.5 h-3.5 shrink-0" />
                   <span>신청자 전체 공지 발송</span>
                 </button>
               </div>
@@ -592,11 +592,11 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                   {getClubRSVPs(selectedClubForApplicants.id).map((r, index) => (
                     <div
                       key={r.id}
-                      className="p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] flex flex-col md:flex-row md:items-center justify-between gap-3"
+                      className="p-3.5 sm:p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] flex flex-col md:flex-row md:items-center justify-between gap-3"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-md bg-[#191919] text-[#FFE57E] text-[11px] font-extrabold flex items-center justify-center tabular-nums">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="w-6 h-6 rounded-md bg-[#191919] text-[#FFE57E] text-[11px] font-extrabold flex items-center justify-center tabular-nums shrink-0">
                             {index + 1}
                           </span>
                           <span className="font-extrabold text-sm text-[#191919]">{r.participantName}</span>
@@ -609,38 +609,38 @@ export const HostDashboard: React.FC<HostDashboardProps> = ({
                           </span>
                         </div>
 
-                        <div className="text-xs text-[#191919]/70 flex flex-wrap gap-x-4 gap-y-1 pt-1">
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3.5 h-3.5 text-[#191919]/45" />
-                            <a href={`mailto:${r.email}`} className="font-mono text-[#F16B47] font-bold hover:underline">
+                        <div className="text-xs text-[#191919]/70 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 pt-1">
+                          <span className="flex items-center gap-1 min-w-0 break-all">
+                            <Mail className="w-3.5 h-3.5 text-[#191919]/45 shrink-0" />
+                            <a href={`mailto:${r.email}`} className="font-mono text-[#F16B47] font-bold hover:underline break-all">
                               {r.email}
                             </a>
                           </span>
 
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3.5 h-3.5 text-[#191919]/45" />
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Phone className="w-3.5 h-3.5 text-[#191919]/45 shrink-0" />
                             <a href={`tel:${r.phone}`} className="font-mono text-[#191919] font-semibold hover:underline">
                               {r.phone}
                             </a>
                           </span>
 
-                          <span className="flex items-center gap-1 text-[#191919]/60 tabular-nums">
-                            <Clock className="w-3.5 h-3.5 text-[#191919]/45" />
+                          <span className="flex items-center gap-1 text-[#191919]/60 tabular-nums shrink-0">
+                            <Clock className="w-3.5 h-3.5 text-[#191919]/45 shrink-0" />
                             <span>신청일: {r.registeredAt}</span>
                           </span>
                         </div>
 
                         {r.userNotes && (
-                          <div className="mt-1 p-2.5 bg-[#FBF9E9] rounded-lg text-[11px] text-[#191919]/80 border border-[#191919]/15">
+                          <div className="mt-1 p-2.5 bg-[#FBF9E9] rounded-lg text-[11px] text-[#191919]/80 border border-[#191919]/15 break-words">
                             <strong className="text-[#191919]">독서 메모: </strong>
                             {r.userNotes}
                           </div>
                         )}
                       </div>
 
-                      <div className="text-right shrink-0">
+                      <div className="text-left md:text-right shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#191919]/10">
                         <div className="text-xs font-extrabold text-[#191919] flex items-center md:justify-end gap-1 tabular-nums">
-                          <CreditCard className="w-3.5 h-3.5 text-[#F16B47]" />
+                          <CreditCard className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
                           <span>CAD ${r.paymentAmountCAD || 15}</span>
                         </div>
                         <span className="text-[10px] text-[#191919]/55">

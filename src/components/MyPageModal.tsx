@@ -289,7 +289,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
           {/* TAB 1: CLUBS HISTORY */}
           {activeTab === 'clubs' && (
             <div className="space-y-4 sm:space-y-5">
@@ -472,7 +472,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                               </a>
 
                               {confirmCancelRsvpId === rsvp.id ? (
-                                <div className="inline-flex items-center gap-1.5 bg-[#F16B47]/10 border border-[#F16B47]/35 px-2.5 py-1 rounded-lg">
+                                <div className="inline-flex flex-wrap items-center gap-1.5 bg-[#F16B47]/10 border border-[#F16B47]/35 px-2.5 py-1 rounded-lg max-w-full">
                                   <span className="text-[11px] font-bold text-[#B93815]">전액 환불 후 취소할까요?</span>
                                   <button
                                     onClick={() => {
@@ -518,12 +518,12 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#FFE57E] border border-[#191919]/20 text-[#191919] flex items-center justify-center font-black text-xl sm:text-2xl shrink-0">
                   {name.slice(0, 1) || 'C'}
                 </div>
-                <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base sm:text-lg font-extrabold text-[#191919] truncate">{name}</h4>
-                    <span className="text-xs text-[#191919]/55 font-mono">(@{currentUser.username})</span>
+                    <h4 className="text-base sm:text-lg font-extrabold text-[#191919] break-words">{name}</h4>
+                    <span className="text-xs text-[#191919]/55 font-mono break-all">(@{currentUser.username})</span>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-[#191919]/65 truncate">
+                  <p className="text-[11px] sm:text-xs text-[#191919]/65 leading-relaxed">
                     가입일: <strong>{currentUser.createdAt || '2026년 11월'}</strong> • 회원 상태: <span className="text-emerald-700 font-bold">정상 (인증완료)</span>
                   </p>
                 </div>
@@ -643,7 +643,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                               setBirthDateError('');
                             }
                           }}
-                          className={`w-full px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
+                          className={`w-full px-2 sm:px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
                             birthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                           }`}
                         >
@@ -668,7 +668,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                               setBirthDateError('');
                             }
                           }}
-                          className={`w-full px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
+                          className={`w-full px-2 sm:px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
                             birthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                           }`}
                         >
@@ -693,7 +693,7 @@ export const MyPageModal: React.FC<MyPageModalProps> = ({
                               setBirthDateError('');
                             }
                           }}
-                          className={`w-full px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
+                          className={`w-full px-2 sm:px-3 py-2.5 rounded-lg bg-[#FBF9E9] border text-[#191919] focus:outline-none focus:border-[#191919] ${
                             birthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                           }`}
                         >

@@ -116,13 +116,13 @@ export const Hero: React.FC<HeroProps> = ({
   onOpenHostDashboard,
 }) => {
   return (
-    <section className="pt-24 sm:pt-28 pb-10 sm:pb-12 bg-[#FBF9E9]">
+    <section className="pt-24 sm:pt-28 pb-10 sm:pb-12 bg-[#FBF9E9] overflow-x-clip">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 select-none">
         {/* Compact Left-Aligned Poster Block (~568px) */}
         <div className="w-full max-w-[568px]">
           {/* Row 1: 책은 + [Editorial Bookshelf (desktop/tablet)] + 핑계고, + [Compact Bookshelf (mobile right gap)] */}
-          <div className="w-full flex items-center justify-start gap-x-2 sm:justify-between sm:gap-x-1.5">
-            <h1 className="text-[46px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919] shrink-0">
+          <div className="w-full flex items-center justify-start gap-x-1.5 min-[360px]:gap-x-2 sm:justify-between sm:gap-x-1.5">
+            <h1 className="text-[38px] min-[360px]:text-[44px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919] shrink-0">
               책은
             </h1>
 
@@ -218,7 +218,7 @@ export const Hero: React.FC<HeroProps> = ({
               </g>
             </svg>
 
-            <div className="text-[46px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-right shrink-0">
+            <div className="text-[38px] min-[360px]:text-[44px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-right shrink-0">
               <span className="text-[#F16B47]">핑계</span>
               <span className="text-[#191919]">고,</span>
             </div>
@@ -229,7 +229,7 @@ export const Hero: React.FC<HeroProps> = ({
               viewBox="0 0 88 54"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="sm:hidden w-[80px] h-[46px] min-[400px]:w-[90px] min-[400px]:h-[52px] shrink-0 ml-0.5"
+              className="sm:hidden w-[68px] h-[40px] min-[360px]:w-[78px] min-[360px]:h-[46px] min-[400px]:w-[90px] min-[400px]:h-[52px] shrink-0 ml-0.5"
             >
               {/* Standing Books */}
               <rect x="1" y="10" width="10" height="43" rx="1.2" fill="#F16B47" stroke="#191919" strokeWidth="1.2" />
@@ -273,9 +273,9 @@ export const Hero: React.FC<HeroProps> = ({
           </div>
 
           {/* Row 2: Subcopy tucked cleanly beside "우리" */}
-          <div className="mt-3 w-full flex flex-row items-center justify-start sm:justify-end gap-x-3">
-            <div className="flex-initial max-w-[195px] min-[400px]:max-w-[220px] sm:max-w-none sm:flex-1 min-w-0 text-left sm:text-right sm:space-y-1 leading-snug">
-              <p className="text-[13px] min-[400px]:text-[13.5px] sm:text-[15px] font-normal text-[#191919] leading-snug">
+          <div className="mt-3 w-full flex flex-row items-center justify-start sm:justify-end gap-x-2.5 min-[360px]:gap-x-3">
+            <div className="flex-initial max-w-[175px] min-[360px]:max-w-[195px] min-[400px]:max-w-[220px] sm:max-w-none sm:flex-1 min-w-0 text-left sm:text-right sm:space-y-1 leading-snug">
+              <p className="text-[12.5px] min-[360px]:text-[13px] min-[400px]:text-[13.5px] sm:text-[15px] font-normal text-[#191919] leading-snug">
                 캘거리에서 새로운 사람을 만나는 가장 재밌는 방법.
               </p>
               <p className="hidden sm:block text-[12.5px] text-[#191919]/75">
@@ -284,16 +284,16 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[46px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919] block">
+              <span className="text-[38px] min-[360px]:text-[44px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919] block">
                 우리
               </span>
             </div>
           </div>
 
           {/* Row 3: 만 + [Coffee Mug SVG (desktop/tablet)] + 나요! | Yellow CTA */}
-          <div className="mt-3 w-full flex flex-row items-center justify-start gap-x-2 min-[400px]:gap-x-2.5 sm:justify-between sm:gap-3">
+          <div className="mt-3 w-full flex flex-row items-center justify-start gap-x-1.5 min-[360px]:gap-x-2 min-[400px]:gap-x-2.5 sm:justify-between sm:gap-3">
             <div className="inline-flex items-center gap-0 sm:gap-2.5 shrink-0">
-              <span className="text-[46px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919]">
+              <span className="text-[38px] min-[360px]:text-[44px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919]">
                 만
               </span>
 
@@ -302,21 +302,21 @@ export const Hero: React.FC<HeroProps> = ({
                 <CoffeeMugSvg className="hidden sm:block sm:w-[70px] sm:h-[92px] md:w-[80px] md:h-[104px] sm:-mt-3.5 md:-mt-4" />
               </span>
 
-              <span className="text-[46px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919]">
+              <span className="text-[38px] min-[360px]:text-[44px] min-[400px]:text-[52px] sm:text-[64px] md:text-[80px] font-black tracking-[-0.04em] leading-[1.02] text-[#191919]">
                 나요!
               </span>
             </div>
 
             {/* Coffee Mug SVG in middle space between '만나요!' and CTA (mobile only) */}
             <span aria-hidden="true" className="sm:hidden inline-flex items-center justify-center shrink-0">
-              <CoffeeMugSvg className="w-[42px] h-[54px] min-[400px]:w-[48px] min-[400px]:h-[62px] -mt-1.5 min-[400px]:-mt-2" />
+              <CoffeeMugSvg className="w-[36px] h-[48px] min-[360px]:w-[42px] min-[360px]:h-[54px] min-[400px]:w-[48px] min-[400px]:h-[62px] -mt-1.5 min-[400px]:-mt-2" />
             </span>
 
             <div className="flex flex-col items-start shrink-0">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={onExploreClick}
-                  className="px-3.5 py-2.5 min-[400px]:px-4 min-[400px]:py-2.5 sm:px-7 sm:py-3.5 rounded-xl bg-[#FFE57E] hover:bg-[#191919] text-[#191919] hover:text-[#FFE57E] border border-[#191919]/25 text-xs sm:text-[13px] font-bold tracking-tight transition-colors cursor-pointer whitespace-nowrap"
+                  className="px-3 py-2 min-[360px]:px-3.5 min-[360px]:py-2.5 min-[400px]:px-4 min-[400px]:py-2.5 sm:px-7 sm:py-3.5 rounded-xl bg-[#FFE57E] hover:bg-[#191919] text-[#191919] hover:text-[#FFE57E] border border-[#191919]/25 text-[11.5px] min-[360px]:text-xs sm:text-[13px] font-bold tracking-tight transition-colors cursor-pointer whitespace-nowrap"
                 >
                   다음 모임 구경하기
                 </button>

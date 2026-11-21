@@ -23,25 +23,25 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
   const activeLog = logs.find((l) => l.id === selectedLogId) || logs[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="relative w-full max-w-4xl bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-8 overflow-hidden max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-4xl bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-auto sm:my-8 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col min-w-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 bg-[#191919] text-[#FBF9E9] flex items-center justify-between border-b border-[#191919] shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FFE57E] text-[#191919] flex items-center justify-center">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-[#191919] text-[#FBF9E9] flex items-start sm:items-center justify-between gap-2 border-b border-[#191919] shrink-0">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFE57E] text-[#191919] flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-extrabold text-[#FBF9E9]">24시간 최소 인원 미달 자동 취소 시스템 알림</h3>
-                <span className="text-[11px] font-bold bg-[#F16B47] text-white px-2 py-0.5 rounded-md">
+                <h3 className="text-base sm:text-lg font-extrabold text-[#FBF9E9] leading-snug">24시간 최소 인원 미달 자동 취소 시스템 알림</h3>
+                <span className="text-[11px] font-bold bg-[#F16B47] text-white px-2 py-0.5 rounded-md shrink-0">
                   자동 발송 완료
                 </span>
               </div>
-              <p className="text-xs text-[#FBF9E9]/70 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-[#FBF9E9]/70 mt-0.5">
                 모임 시작 24시간 전까지 최소 4명 미달 시 자동 취소되며, 호스트 및 신청자 전원에게 알림 및 메일이 전송됩니다.
               </p>
             </div>
@@ -49,14 +49,14 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="p-2 rounded-lg bg-white/10 hover:bg-[#FFE57E] hover:text-[#191919] text-[#FBF9E9] transition-colors cursor-pointer"
+            className="p-2 rounded-lg bg-white/10 hover:bg-[#FFE57E] hover:text-[#191919] text-[#FBF9E9] transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-5 sm:space-y-6">
           {logs.length === 0 ? (
             <div className="text-center py-16 bg-[#FFFDF4] rounded-2xl border border-[#191919]/15 p-8">
               <Inbox className="w-12 h-12 text-[#191919]/40 mx-auto mb-3" />
@@ -120,13 +120,13 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
                           《{activeLog.bookTitle}》
                         </h4>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <span className="text-[11px] text-[#191919]/50 block">모임 예정 일시</span>
                         <span className="text-xs font-bold text-[#191919]">{activeLog.dateTime}</span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
                       <div className="bg-[#FBF9E9] p-2.5 rounded-xl border border-[#191919]/12">
                         <span className="text-[10px] text-[#191919]/55 block">담당 호스트</span>
                         <span className="font-bold text-[#191919] truncate block">{activeLog.hostName}</span>
@@ -152,12 +152,12 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
 
                   {/* Dispatched Emails & Notifications */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <h5 className="text-xs font-bold text-[#191919] flex items-center gap-1.5">
-                        <Mail className="w-4 h-4 text-[#F16B47]" />
+                        <Mail className="w-4 h-4 text-[#F16B47] shrink-0" />
                         <span>자동 발송된 취소 안내 메일 및 SMS 내역 ({activeLog.dispatchedEmails.length}건)</span>
                       </h5>
-                      <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                      <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         전송 상태: 성공
                       </span>
@@ -169,20 +169,20 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
                         return (
                           <div
                             key={email.id}
-                            className={`p-4 rounded-xl border text-xs space-y-2 ${
+                            className={`p-3.5 sm:p-4 rounded-xl border text-xs space-y-2 ${
                               isHost
                                 ? 'bg-[#FFE57E]/25 border-[#191919]/20'
                                 : 'bg-[#FFFDF4] border-[#191919]/15'
                             }`}
                           >
                             <div className="flex items-center justify-between flex-wrap gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${
                                   isHost ? 'bg-[#FFE57E] text-[#191919]' : 'bg-[#B9D8E6]/60 text-[#191919]'
                                 }`}>
                                   {isHost ? '호스트 수신 메일' : '신청 회원 수신 메일'}
                                 </span>
-                                <span className="font-bold text-[#191919]">
+                                <span className="font-bold text-[#191919] break-all">
                                   {email.recipientName} ({email.recipientEmail})
                                 </span>
                                 {email.recipientPhone && (
@@ -194,17 +194,17 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
                               <span className="text-[10px] text-[#191919]/45">{email.timestamp}</span>
                             </div>
 
-                            <div className="font-bold text-[#191919] text-xs border-b border-[#191919]/10 pb-1.5">
+                            <div className="font-bold text-[#191919] text-xs border-b border-[#191919]/10 pb-1.5 break-words">
                               {email.subject}
                             </div>
 
-                            <p className="text-[11px] text-[#191919]/75 leading-relaxed whitespace-pre-line bg-[#FBF9E9] p-3 rounded-lg border border-[#191919]/10">
+                            <p className="text-[11px] text-[#191919]/75 leading-relaxed whitespace-pre-line bg-[#FBF9E9] p-3 rounded-lg border border-[#191919]/10 break-words">
                               {email.message}
                             </p>
 
                             {!isHost && email.refundAmountCAD && (
                               <div className="text-[11px] font-bold text-emerald-800 flex items-center gap-1 pt-0.5">
-                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                                 <span>환불 보증: 참가비 CAD ${email.refundAmountCAD} 전액 자동 환불 완료</span>
                               </div>
                             )}
@@ -220,14 +220,14 @@ export const AutoCancellationNoticeModal: React.FC<AutoCancellationNoticeModalPr
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
           <div className="flex items-center gap-2 text-xs text-[#191919]/60">
-            <Clock className="w-3.5 h-3.5 text-[#F16B47]" />
+            <Clock className="w-3.5 h-3.5 text-[#F16B47] shrink-0" />
             <span>최소 인원(4명) 자동 점검 주기는 실시간으로 동작합니다.</span>
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold cursor-pointer transition-colors"
+            className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold cursor-pointer transition-colors text-center"
           >
             확인 및 닫기
           </button>

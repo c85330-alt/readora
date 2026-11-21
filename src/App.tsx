@@ -551,7 +551,7 @@ export default function App() {
       <>
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
+          <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 sm:max-w-md bg-[#191919] text-[#FBF9E9] px-4 sm:px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
             <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
           </div>
         )}
@@ -658,7 +658,7 @@ export default function App() {
       <>
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
+          <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 sm:max-w-md bg-[#191919] text-[#FBF9E9] px-4 sm:px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
             <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
           </div>
         )}
@@ -757,10 +757,10 @@ export default function App() {
 
   // Unified Web Application (for guests and authenticated members/hosts/admins)
   return (
-    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col font-sans selection:bg-[#FFE57E] selection:text-[#191919]">
+    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col font-sans selection:bg-[#FFE57E] selection:text-[#191919] overflow-x-clip">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
+        <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6 z-50 sm:max-w-md bg-[#191919] text-[#FBF9E9] px-4 sm:px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
           <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
         </div>
       )}

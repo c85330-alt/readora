@@ -163,40 +163,40 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs">
       <div 
-        className="bg-[#FBF9E9] w-full max-w-2xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[92vh] flex flex-col"
+        className="bg-[#FBF9E9] w-full max-w-2xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col min-w-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
+        <div className="p-4 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919] shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
             aria-label="닫기"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap pr-8">
             <span className="font-display-en font-extrabold text-[11px] uppercase tracking-wider bg-[#FFE57E] text-[#191919] px-2.5 py-0.5 rounded-md">
               Host Management
             </span>
             <span className="text-xs text-[#FBF9E9]/40">|</span>
             <span className="text-xs text-[#FBF9E9]/75 font-medium">모임 수정 및 상태 관리</span>
           </div>
-          <h3 className="text-xl font-extrabold text-[#FBF9E9] pr-8">{club.bookTitle} 모임 정보 수정</h3>
-          <p className="text-xs text-[#FBF9E9]/70 mt-1">
+          <h3 className="text-base sm:text-xl font-extrabold text-[#FBF9E9] pr-8 leading-snug break-words">{club.bookTitle} 모임 정보 수정</h3>
+          <p className="text-[11px] sm:text-xs text-[#FBF9E9]/70 mt-1">
             모집 중 일시, 장소, 발제 질문 공개 여부 및 도서 커버 이미지를 업데이트할 수 있습니다.
           </p>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
+        <form onSubmit={handleSubmit} className="p-3.5 sm:p-6 overflow-y-auto overflow-x-hidden flex-1 space-y-4 sm:space-y-5 min-w-0">
           {formError && (
-            <div className="p-3 bg-[#F16B47]/15 border border-[#F16B47]/40 text-[#191919] rounded-xl text-xs font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#F16B47] shrink-0" />
-              <span>{formError}</span>
+            <div className="p-3 bg-[#F16B47]/15 border border-[#F16B47]/40 text-[#191919] rounded-xl text-xs font-semibold flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-[#F16B47] shrink-0 mt-0.5" />
+              <span className="min-w-0 flex-1 break-words">{formError}</span>
             </div>
           )}
 
@@ -214,7 +214,7 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStatus('open')}
-                className={`py-2 px-3 rounded-lg text-xs font-extrabold border transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-[11px] sm:text-xs font-extrabold border transition-all cursor-pointer leading-tight ${
                   status === 'open'
                     ? 'bg-[#B9D8E6] text-[#191919] border-[#191919]'
                     : 'bg-[#FBF9E9] text-[#191919]/70 border-[#191919]/15 hover:border-[#191919]/40'
@@ -226,19 +226,19 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStatus('almost_full')}
-                className={`py-2 px-3 rounded-lg text-xs font-extrabold border transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-[11px] sm:text-xs font-extrabold border transition-all cursor-pointer leading-tight ${
                   status === 'almost_full'
                     ? 'bg-[#FFE57E] text-[#191919] border-[#191919]'
                     : 'bg-[#FBF9E9] text-[#191919]/70 border-[#191919]/15 hover:border-[#191919]/40'
                 }`}
               >
-                마감임박 (Almost Full)
+                마감임박
               </button>
 
               <button
                 type="button"
                 onClick={() => setStatus('closed')}
-                className={`py-2 px-3 rounded-lg text-xs font-extrabold border transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-[11px] sm:text-xs font-extrabold border transition-all cursor-pointer leading-tight ${
                   status === 'closed'
                     ? 'bg-[#191919] text-[#FBF9E9] border-[#191919]'
                     : 'bg-[#FBF9E9] text-[#191919]/70 border-[#191919]/15 hover:border-[#191919]/40'
@@ -250,7 +250,7 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStatus('cancelled')}
-                className={`py-2 px-3 rounded-lg text-xs font-extrabold border transition-all cursor-pointer ${
+                className={`py-2 px-2 sm:px-3 rounded-lg text-[11px] sm:text-xs font-extrabold border transition-all cursor-pointer leading-tight ${
                   status === 'cancelled'
                     ? 'bg-[#F16B47] text-white border-[#F16B47]'
                     : 'bg-[#FBF9E9] text-[#F16B47] border-[#F16B47]/35 hover:bg-[#F16B47]/10'
@@ -325,11 +325,11 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
             </div>
 
             {/* Cover Image Upload / URL */}
-            <div>
+            <div className="min-w-0">
               <label className="block text-xs font-bold text-[#191919]/80 mb-1.5">
                 도서 커버 이미지 (원하는 이미지 직접 업로드 가능)
               </label>
-              <div className="flex gap-3 items-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full min-w-0">
                 <div className="w-14 h-20 rounded-lg overflow-hidden border border-[#191919]/20 bg-[#FBF9E9] shrink-0">
                   {coverImage ? (
                     <img src={coverImage} alt="Cover" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
@@ -340,10 +340,10 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
                   )}
                 </div>
 
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-bold cursor-pointer transition-colors">
-                      <Upload className="w-3.5 h-3.5" />
+                <div className="flex-1 min-w-0 w-full space-y-2">
+                  <div className="flex flex-wrap gap-2 items-center min-w-0">
+                    <label className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-bold cursor-pointer transition-colors shrink-0">
+                      <Upload className="w-3.5 h-3.5 shrink-0" />
                       <span>내 컴퓨터에서 이미지 업로드</span>
                       <input
                         type="file"
@@ -353,7 +353,7 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
                       />
                     </label>
                     {coverFileName && (
-                      <span className="text-[11px] text-[#191919]/65 truncate max-w-[160px]">
+                      <span className="text-[11px] text-[#191919]/65 truncate min-w-0 max-w-full">
                         {coverFileName}
                       </span>
                     )}
@@ -364,7 +364,7 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
                     value={coverImage}
                     onChange={(e) => setCoverImage(e.target.value)}
                     placeholder="또는 이미지 웹 URL 링크 직접 입력"
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FBF9E9] text-[#191919] font-mono"
+                    className="w-full min-w-0 px-3 py-1.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FBF9E9] text-[#191919] font-mono"
                   />
                 </div>
               </div>
@@ -578,9 +578,9 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
                 : '모임 상세페이지에서 발제 질문이 숨겨지며, 모임 당일 현장에서 공개됩니다.'}
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               {discussionTopics.map((topic, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex items-center gap-2 min-w-0">
                   <span className="w-7 h-8 rounded-lg bg-[#191919] text-[#FFE57E] flex items-center justify-center text-xs font-extrabold shrink-0 tabular-nums">
                     {index + 1}
                   </span>
@@ -589,13 +589,13 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
                     value={topic}
                     onChange={(e) => handleUpdateTopic(index, e.target.value)}
                     placeholder="대화를 이끌어낼 깊이 있는 질문을 입력하세요"
-                    className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] bg-[#FBF9E9]"
+                    className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] bg-[#FBF9E9]"
                   />
                   {discussionTopics.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveTopic(index)}
-                      className="p-2 text-[#191919]/45 hover:text-[#F16B47] rounded-lg transition-colors cursor-pointer"
+                      className="p-2 text-[#191919]/45 hover:text-[#F16B47] rounded-lg transition-colors cursor-pointer shrink-0"
                       title="질문 삭제"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -616,19 +616,19 @@ export const EditClubModal: React.FC<EditClubModalProps> = ({
           </div>
 
           {/* Footer Buttons */}
-          <div className="pt-4 border-t border-[#191919]/15 flex items-center justify-end gap-2.5">
+          <div className="pt-4 border-t border-[#191919]/15 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-[#FFFDF4] hover:bg-[#191919]/5 text-[#191919] border border-[#191919]/20 text-xs font-bold transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#FFFDF4] hover:bg-[#191919]/5 text-[#191919] border border-[#191919]/20 text-xs font-bold transition-colors cursor-pointer text-center"
             >
               취소
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 text-xs font-extrabold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 text-xs font-extrabold transition-colors cursor-pointer inline-flex items-center gap-1.5"
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5 shrink-0" />
               <span>수정 내용 저장</span>
             </button>
           </div>

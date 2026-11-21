@@ -74,9 +74,9 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
   // If user is not logged in: gate the detail view
   if (!currentUser) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
         <div
-          className="relative w-full max-w-md bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-8 overflow-hidden p-6 sm:p-8 text-center"
+          className="relative w-full max-w-md bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-auto sm:my-8 overflow-hidden p-5 sm:p-8 text-center"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="w-14 h-14 rounded-xl bg-[#FFE57E] text-[#191919] border border-[#191919]/15 flex items-center justify-center mx-auto mb-4">
@@ -169,7 +169,7 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
         </div>
 
         {/* Scrollable Modal Body */}
-        <div className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <div className="overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4 sm:space-y-5">
 
           {/* STEP 1: DETAIL VIEW */}
           {currentStep === 'detail' && (
@@ -240,8 +240,8 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
-                  <div className="bg-[#FBF9E9] p-3.5 sm:p-4 rounded-xl border border-[#191919]/12 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#FFFDF4] border border-[#191919]/15 text-[#F16B47] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="bg-[#FBF9E9] p-3.5 sm:p-4 rounded-xl border border-[#191919]/12 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[#FFFDF4] border border-[#191919]/15 text-[#F16B47] flex items-center justify-center shrink-0">
                       <Clock className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -250,8 +250,8 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="bg-[#FBF9E9] p-3.5 sm:p-4 rounded-xl border border-[#191919]/12 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#FFFDF4] border border-[#191919]/15 text-[#191919] flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="bg-[#FBF9E9] p-3.5 sm:p-4 rounded-xl border border-[#191919]/12 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[#FFFDF4] border border-[#191919]/15 text-[#191919] flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -468,21 +468,21 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
                 </h3>
 
                 <div className="bg-[#FBF9E9] p-3.5 sm:p-4 rounded-xl border border-[#191919]/12 space-y-2 text-xs">
-                  <div className="flex justify-between gap-2">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-[#191919]/60 shrink-0">신청 모임</span>
-                    <strong className="text-[#191919] text-right truncate">{club.title}</strong>
+                    <strong className="text-[#191919] text-right min-w-0 flex-1 break-words leading-snug">{club.title}</strong>
                   </div>
-                  <div className="flex justify-between gap-2">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-[#191919]/60 shrink-0">도서명</span>
-                    <strong className="text-[#F16B47] text-right truncate">{club.bookTitle}</strong>
+                    <strong className="text-[#F16B47] text-right min-w-0 flex-1 break-words leading-snug">{club.bookTitle}</strong>
                   </div>
-                  <div className="flex justify-between items-start gap-2">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="text-[#191919]/60 shrink-0">일시 및 장소</span>
-                    <span className="text-[#191919] text-right text-[11px] sm:text-xs break-words leading-snug">{club.dateTime} · {club.venueName}{club.venueAddress ? ` (${club.venueAddress})` : ''}</span>
+                    <span className="text-[#191919] text-right text-[11px] sm:text-xs min-w-0 flex-1 break-words leading-snug">{club.dateTime} · {club.venueName}{club.venueAddress ? ` (${club.venueAddress})` : ''}</span>
                   </div>
-                  <div className="flex justify-between gap-2 pt-2 border-t border-[#191919]/12">
+                  <div className="flex justify-between items-start gap-3 pt-2 border-t border-[#191919]/12">
                     <span className="text-[#191919]/60 shrink-0">신청자 정보</span>
-                    <strong className="text-[#191919] text-right text-[11px] sm:text-xs truncate">{currentUser.name} ({currentUser.email})</strong>
+                    <strong className="text-[#191919] text-right text-[11px] sm:text-xs min-w-0 flex-1 break-all leading-snug">{currentUser.name} ({currentUser.email})</strong>
                   </div>
                 </div>
 
@@ -649,29 +649,29 @@ export const ClubDetailModal: React.FC<ClubDetailModalProps> = ({
 
               {/* Receipt Card */}
               <div className="bg-[#FBF9E9] rounded-xl p-4 sm:p-5 max-w-md mx-auto text-left border border-[#191919]/15 space-y-2 text-xs">
-                <div className="flex justify-between text-[#191919]/60 pb-2 border-b border-[#191919]/12">
-                  <span>영수증 번호</span>
-                  <span className="font-mono font-bold text-[#191919]">{receiptNumber}</span>
+                <div className="flex justify-between gap-2 text-[#191919]/60 pb-2 border-b border-[#191919]/12">
+                  <span className="shrink-0">영수증 번호</span>
+                  <span className="font-mono font-bold text-[#191919] truncate">{receiptNumber}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#191919]/60">신청 모임</span>
-                  <strong className="text-[#191919] truncate max-w-[200px]">{club.title}</strong>
+                <div className="flex justify-between items-start gap-3">
+                  <span className="text-[#191919]/60 shrink-0">신청 모임</span>
+                  <strong className="text-[#191919] text-right min-w-0 flex-1 break-words leading-snug">{club.title}</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#191919]/60">도서명</span>
-                  <strong className="text-[#F16B47] truncate max-w-[200px]">{club.bookTitle}</strong>
+                <div className="flex justify-between items-start gap-3">
+                  <span className="text-[#191919]/60 shrink-0">도서명</span>
+                  <strong className="text-[#F16B47] text-right min-w-0 flex-1 break-words leading-snug">{club.bookTitle}</strong>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#191919]/60">일시</span>
-                  <span className="text-[#191919]">{club.dateTime}</span>
+                <div className="flex justify-between items-start gap-3">
+                  <span className="text-[#191919]/60 shrink-0">일시</span>
+                  <span className="text-[#191919] text-right min-w-0 flex-1 break-words">{club.dateTime}</span>
                 </div>
-                <div className="flex justify-between items-start gap-2">
+                <div className="flex justify-between items-start gap-3">
                   <span className="text-[#191919]/60 shrink-0">장소</span>
-                  <span className="text-[#191919] text-right text-xs break-words leading-snug">{club.venueName}{club.venueAddress ? ` (${club.venueAddress})` : ''}</span>
+                  <span className="text-[#191919] text-right text-xs min-w-0 flex-1 break-words leading-snug">{club.venueName}{club.venueAddress ? ` (${club.venueAddress})` : ''}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#191919]/12 text-sm">
-                  <span className="font-bold text-[#191919]">결제 금액 (CAD)</span>
-                  <span className="font-black text-[#F16B47] tabular-nums">${club.feeCAD}.00 (결제 완료)</span>
+                <div className="flex justify-between items-center gap-2 pt-2 border-t border-[#191919]/12 text-sm">
+                  <span className="font-bold text-[#191919] shrink-0">결제 금액 (CAD)</span>
+                  <span className="font-black text-[#F16B47] tabular-nums text-right">${club.feeCAD}.00 (결제 완료)</span>
                 </div>
               </div>
 

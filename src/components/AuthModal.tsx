@@ -872,9 +872,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="bg-[#FBF9E9] w-full max-w-md rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden relative max-h-[94dvh] sm:max-h-[92vh] my-auto flex flex-col"
+        className="bg-[#FBF9E9] w-full max-w-md rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden relative max-h-[94dvh] sm:max-h-[92vh] my-auto flex flex-col min-w-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -959,26 +959,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Signup Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'signup' && signupNotice && !completedSignupProfile && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
+          <div className="border-b px-4 sm:px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
               <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
-              <div className="flex-1">
-                <div className="font-bold flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="font-bold flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[#191919]">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                     인증번호 이메일 발송 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setSignupNotice(null)}
-                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer shrink-0"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
-                  <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{signupNotice.email}</span>
+                  <p className="break-all">
+                    <strong>수신:</strong> <span className="font-mono text-[#191919] break-all">{signupNotice.email}</span>
                   </p>
                   <p className="text-[#191919] font-medium pt-0.5">
                     {signupNotice.message}
@@ -991,26 +991,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Find ID Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'find_id' && findIdNotice && !isFindIdVerified && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
+          <div className="border-b px-4 sm:px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
               <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
-              <div className="flex-1">
-                <div className="font-bold flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="font-bold flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[#191919]">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                     본인확인 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setFindIdNotice(null)}
-                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer shrink-0"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
-                  <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{findIdNotice.email}</span>
+                  <p className="break-all">
+                    <strong>수신:</strong> <span className="font-mono text-[#191919] break-all">{findIdNotice.email}</span>
                   </p>
                   <p className="text-[#191919] font-medium pt-0.5">
                     {findIdNotice.message}
@@ -1023,26 +1023,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Reset Password Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'reset_password' && resetPwNotice && !isResetPwVerified && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
+          <div className="border-b px-4 sm:px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
               <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
-              <div className="flex-1">
-                <div className="font-bold flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="font-bold flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[#191919]">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                     비밀번호 재설정 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setResetPwNotice(null)}
-                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer shrink-0"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
-                  <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{resetPwNotice.email}</span>
+                  <p className="break-all">
+                    <strong>수신:</strong> <span className="font-mono text-[#191919] break-all">{resetPwNotice.email}</span>
                   </p>
                   <p className="text-[#191919] font-medium pt-0.5">
                     {resetPwNotice.message}
@@ -1054,7 +1054,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto overflow-x-hidden flex-1">
           {/* ==================== 1. LOGIN VIEW ==================== */}
           {activeTab === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5 sm:space-y-4">
@@ -1191,9 +1191,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         completedSignupProfile.birth_date}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#191919]/10">
-                    <span className="text-[#191919]/60">인증 이메일</span>
-                    <span className="font-mono text-[#191919]/80">{completedSignupProfile.email || signupEmail.trim()}</span>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#191919]/10">
+                    <span className="text-[#191919]/60 shrink-0">인증 이메일</span>
+                    <span className="font-mono text-[#191919]/80 break-all text-right">{completedSignupProfile.email || signupEmail.trim()}</span>
                   </div>
                 </div>
 
@@ -1238,7 +1238,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="영문, 숫자 4자 이상"
-                    className="flex-1 px-3.5 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
+                    className="flex-1 min-w-0 px-3 sm:px-3.5 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                   <button
                     type="button"
@@ -1363,7 +1363,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       }
                     }}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
-                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                    className={`w-full px-2 sm:px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
                       signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                     }`}
                   >
@@ -1389,7 +1389,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       }
                     }}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
-                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                    className={`w-full px-2 sm:px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
                       signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                     }`}
                   >
@@ -1415,7 +1415,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       }
                     }}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
-                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                    className={`w-full px-2 sm:px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
                       signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
                     }`}
                   >
@@ -1453,13 +1453,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     placeholder="calgary@example.com"
                     disabled={isSignupCodeSent || isSignupEmailVerified}
-                    className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
+                    className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                   <button
                     type="button"
                     onClick={handleSendSignupCode}
                     disabled={isSignupEmailVerified || isSendingEmail || (isSignupCodeSent && signupResendCooldown > 0)}
-                    className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                    className="px-3 sm:px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {isSendingEmail
                       ? '발송 중...'
@@ -1490,13 +1490,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={signupInputCode}
                       onChange={(e) => setSignupInputCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="6자리 숫자"
-                      className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
+                      className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                     />
                     <button
                       type="button"
                       onClick={handleVerifySignupCode}
                       disabled={isVerifyingSignupOtp}
-                      className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
                     >
                       {isVerifyingSignupOtp ? '확인 중...' : '확인'}
                     </button>
@@ -1558,7 +1558,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       가입 시 등록한 이메일 주소
                     </label>
                     <div className="flex gap-2">
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 min-w-0">
                         <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                         <input
                           type="email"
@@ -1577,7 +1577,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="button"
                         onClick={handleSendFindIdCode}
                         disabled={isSendingFindIdOtp || (isFindIdCodeSent && findIdResendCooldown > 0)}
-                        className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                        className="px-3 sm:px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {isSendingFindIdOtp
                           ? '발송 중...'
@@ -1608,13 +1608,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={findIdInputCode}
                           onChange={(e) => setFindIdInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
-                          className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
+                          className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyFindIdCode}
                           disabled={isVerifyingFindIdOtp}
-                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
                         >
                           {isVerifyingFindIdOtp ? '확인 중...' : '인증 확인'}
                         </button>
@@ -1639,10 +1639,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </p>
 
                     <div className="my-3 p-3.5 bg-[#FBF9E9] rounded-xl border border-[#191919]/15 text-left space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-[#191919]/60">회원 아이디:</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-base text-[#191919]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-[#191919]/60 shrink-0">회원 아이디:</span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-mono font-bold text-base text-[#191919] break-all">
                             {foundUser?.username}
                           </span>
                           <button
@@ -1736,7 +1736,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       가입 이메일 주소
                     </label>
                     <div className="flex gap-2">
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 min-w-0">
                         <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                         <input
                           type="email"
@@ -1755,7 +1755,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         type="button"
                         onClick={handleSendResetPwCode}
                         disabled={isSendingResetPwOtp || (isResetPwCodeSent && resetPwResendCooldown > 0)}
-                        className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                        className="px-3 sm:px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {isSendingResetPwOtp
                           ? '발송 중...'
@@ -1786,13 +1786,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={resetPwInputCode}
                           onChange={(e) => setResetPwInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
-                          className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
+                          className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyResetPwCode}
                           disabled={isVerifyingResetPwOtp}
-                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
                         >
                           {isVerifyingResetPwOtp ? '확인 중...' : '인증 확인'}
                         </button>
@@ -1809,7 +1809,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
                     <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <span>이메일 본인인증 완료 ({resetPwEmail.trim()}). 새 비밀번호를 설정하세요.</span>
+                    <span className="break-all">이메일 본인인증 완료 ({resetPwEmail.trim()}). 새 비밀번호를 설정하세요.</span>
                   </div>
 
                   <div>

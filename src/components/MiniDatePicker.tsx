@@ -145,7 +145,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
       {/* Mini Calendar Popover */}
       {isOpen && (
         <div
-          className="absolute left-0 top-full mt-1.5 z-50 w-72 bg-[#FFFDF4] rounded-xl shadow-xl border border-[#191919]/20 p-3 text-xs"
+          className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[248px] max-w-[calc(100vw-3rem)] sm:w-72 bg-[#FFFDF4] rounded-xl shadow-xl border border-[#191919]/20 p-2.5 sm:p-3 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -246,11 +246,11 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
           </div>
 
           {/* Footer: Replaced 'Today' button with minimum 7 days notice as requested */}
-          <div className="mt-2.5 pt-2 border-t border-[#191919]/10 flex items-center justify-between text-[11px]">
+          <div className="mt-2.5 pt-2 border-t border-[#191919]/10 flex flex-wrap items-center justify-between gap-1 text-[11px]">
             <span className="text-[#F16B47] font-bold flex items-center gap-1">
               • 개설일 기준 최소 7일 후부터 설정 가능
             </span>
-            <span className="text-[#191919]/50 font-mono text-[10px]">
+            <span className="text-[#191919]/50 font-mono text-[10px] shrink-0">
               {value || '날짜 미선택'}
             </span>
           </div>

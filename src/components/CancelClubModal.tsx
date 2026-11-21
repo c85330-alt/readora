@@ -29,29 +29,29 @@ export const CancelClubModal: React.FC<CancelClubModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="bg-[#FBF9E9] w-full max-w-lg rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden relative"
+        className="bg-[#FBF9E9] w-full max-w-lg rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden relative my-auto max-h-[94dvh] sm:max-h-[92vh] flex flex-col min-w-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
+        <div className="p-4 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919] shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FFE57E] p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 text-[#FBF9E9]/70 hover:text-[#FFE57E] p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="닫기"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-8 h-8 rounded-lg bg-[#F16B47] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#F16B47] flex items-center justify-center shrink-0">
               <AlertTriangle className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-sm tracking-wide text-[#FFE57E]">모임 취소 확인</span>
           </div>
 
-          <h3 className="text-xl font-extrabold text-[#FBF9E9]">
+          <h3 className="text-lg sm:text-xl font-extrabold text-[#FBF9E9] pr-8 break-words leading-snug">
             '{club.bookTitle}' 모임을 취소하시겠습니까?
           </h3>
           <p className="text-xs text-[#FBF9E9]/70 mt-1">
@@ -60,9 +60,9 @@ export const CancelClubModal: React.FC<CancelClubModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overflow-x-hidden flex-1">
           {/* Club Info Preview */}
-          <div className="p-3.5 bg-[#FFFDF4] rounded-xl border border-[#191919]/15 flex items-center gap-3">
+          <div className="p-3.5 bg-[#FFFDF4] rounded-xl border border-[#191919]/15 flex items-center gap-3 min-w-0">
             <img
               src={club.coverImage}
               alt={club.bookTitle}
@@ -85,9 +85,9 @@ export const CancelClubModal: React.FC<CancelClubModalProps> = ({
           </div>
 
           {/* 100% Refund Policy Banner */}
-          <div className="p-4 bg-[#FFE57E]/30 rounded-xl border border-[#191919]/15 space-y-1.5 text-xs text-[#191919]">
+          <div className="p-3.5 sm:p-4 bg-[#FFE57E]/30 rounded-xl border border-[#191919]/15 space-y-1.5 text-xs text-[#191919]">
             <div className="font-bold flex items-center gap-1.5 text-[#191919]">
-              <ShieldCheck className="w-4 h-4 text-[#F16B47]" />
+              <ShieldCheck className="w-4 h-4 text-[#F16B47] shrink-0" />
               <span>신청 회원 100% 전액 환불 및 안내 알림 보장</span>
             </div>
             <p className="text-[11px] text-[#191919]/75 leading-relaxed">
@@ -125,18 +125,18 @@ export const CancelClubModal: React.FC<CancelClubModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex items-center justify-end gap-2.5">
+        <div className="p-3.5 sm:p-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/5 text-[#191919] border border-[#191919]/20 text-xs font-bold cursor-pointer transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/5 text-[#191919] border border-[#191919]/20 text-xs font-bold cursor-pointer transition-colors text-center"
           >
             돌아가기 (취소 안 함)
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-5 py-2.5 rounded-lg bg-[#F16B47] hover:bg-[#d95734] text-white text-xs font-bold cursor-pointer transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#F16B47] hover:bg-[#d95734] text-white text-xs font-bold cursor-pointer transition-colors text-center"
           >
             모임 취소 확정하기
           </button>

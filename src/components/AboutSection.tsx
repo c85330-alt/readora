@@ -27,7 +27,7 @@ export const AboutSection: React.FC = () => {
           </svg>
 
           {/* Foreground Note Card */}
-          <div className="relative bg-[#FFFDF4] rounded-2xl border border-[#191919]/15 p-7 sm:p-11 md:p-14 shadow-xs">
+          <div className="relative bg-[#FFFDF4] rounded-2xl border border-[#191919]/15 p-5 sm:p-11 md:p-14 shadow-xs">
             {/* Eyebrow & Heading */}
             <div className="mb-7">
               <p className="font-display-en text-xs font-bold tracking-[0.12em] uppercase text-[#F16B47]">
@@ -62,7 +62,7 @@ export const AboutSection: React.FC = () => {
             </div>
 
             {/* Bottom Signature Bar */}
-            <div className="mt-8 flex items-end justify-between gap-4">
+            <div className="mt-8 flex flex-wrap items-end justify-between gap-2 sm:gap-4">
               <div>
                 <p className="text-sm font-bold text-[#191919]">READORA Calgary</p>
                 <p className="text-xs text-[#191919]/55 mt-0.5">

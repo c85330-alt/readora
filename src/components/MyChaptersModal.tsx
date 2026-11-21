@@ -113,7 +113,7 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
         ) : (
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             {/* Left Sidebar: List of Joined Clubs */}
-            <div className="w-full md:w-72 bg-[#FFFDF4] border-b md:border-b-0 md:border-r border-[#191919]/15 p-3 md:p-4 overflow-y-auto flex-shrink-0 space-y-2">
+            <div className="w-full md:w-72 max-h-40 md:max-h-none bg-[#FFFDF4] border-b md:border-b-0 md:border-r border-[#191919]/15 p-3 md:p-4 overflow-y-auto flex-shrink-0 space-y-2">
               <div className="text-[11px] font-bold text-[#191919]/55 uppercase tracking-wider px-2 py-1">
                 신청 완료된 모임 ({rsvps.length})
               </div>
@@ -153,7 +153,7 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
 
             {/* Right Main Panel: Detail of Active Club */}
             {activeRsvp && (
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4 sm:space-y-5">
                 {/* Top Card: Book & Schedule Banner */}
                 <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
                   <div className="w-20 h-28 flex-shrink-0 rounded-xl overflow-hidden bg-[#FBF9E9] border border-[#191919]/15">
@@ -175,10 +175,10 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-extrabold text-[#191919] leading-snug truncate">
+                    <h3 className="text-base sm:text-lg font-extrabold text-[#191919] leading-snug break-words">
                       {activeRsvp.bookTitle} • {activeRsvp.author}
                     </h3>
-                    <p className="text-xs text-[#191919]/65 mt-1 mb-3 truncate">
+                    <p className="text-xs text-[#191919]/65 mt-1 mb-3 break-words">
                       {activeRsvp.clubTitle}
                     </p>
 
@@ -195,7 +195,7 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                       </a>
 
                       {confirmCancelId === activeRsvp.id ? (
-                        <div className="inline-flex items-center gap-1.5 bg-[#F16B47]/10 border border-[#F16B47]/35 px-2.5 py-1 rounded-lg">
+                        <div className="inline-flex flex-wrap items-center gap-1.5 bg-[#F16B47]/10 border border-[#F16B47]/35 px-2.5 py-1 rounded-lg">
                           <span className="text-[11px] font-bold text-[#B93815]">정말 취소할까요?</span>
                           <button
                             onClick={() => {
@@ -246,23 +246,23 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                 </div>
 
                 {/* Venue & Location Notice */}
-                <div className="bg-[#FFFDF4] rounded-2xl p-5 border border-[#191919]/15 space-y-3">
+                <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-[#191919] flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#F16B47]" />
+                      <MapPin className="w-4 h-4 text-[#F16B47] shrink-0" />
                       <span>모임 장소 안내</span>
                     </h4>
                   </div>
 
                   <div className="bg-[#FBF9E9] p-3.5 rounded-xl border border-[#191919]/12 text-xs space-y-1.5">
-                    <p className="font-bold text-[#191919] text-sm">
+                    <p className="font-bold text-[#191919] text-sm break-words">
                       {activeRsvp.venueName}
                     </p>
                     {activeClub?.area && (
                       <p className="text-[#191919]/65">{activeClub.area}</p>
                     )}
                     {activeClub?.parkingInfo && (
-                      <p className="text-[#191919]/75 pt-1 border-t border-[#191919]/10">
+                      <p className="text-[#191919]/75 pt-1 border-t border-[#191919]/10 break-words">
                         🚗 <strong>주차/교통:</strong> {activeClub.parkingInfo}
                       </p>
                     )}
@@ -270,24 +270,24 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                 </div>
 
                 {/* Host Announcement Notice Board */}
-                <div className="bg-[#FFE57E]/25 rounded-2xl p-5 border border-[#191919]/15 space-y-2">
+                <div className="bg-[#FFE57E]/25 rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-2">
                   <h4 className="text-sm font-bold text-[#191919] flex items-center gap-2">
-                    <BellRing className="w-4 h-4 text-[#F16B47]" />
+                    <BellRing className="w-4 h-4 text-[#F16B47] shrink-0" />
                     <span>호스트 최신 공지사항</span>
                   </h4>
-                  <p className="text-xs text-[#191919]/80 leading-relaxed">
+                  <p className="text-xs text-[#191919]/80 leading-relaxed break-words">
                     "안녕하세요 {activeRsvp.participantName}님! 모임 당일 10분 전까지 도착하시면 편안하게 음료를 주문하고 인사 나누실 수 있습니다. 카페 테이블 위에 주황색 <strong>'리도라(Readora)'</strong> 아크릴 북마크가 놓여 있으니 편하게 합석해주세요."
                   </p>
                 </div>
 
                 {/* Discussion Questions & User Note Pad */}
-                <div className="bg-[#B9D8E6]/25 rounded-2xl p-5 border border-[#191919]/15 space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="bg-[#B9D8E6]/25 rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-sm font-bold text-[#191919] flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[#191919]" />
+                      <MessageSquare className="w-4 h-4 text-[#191919] shrink-0" />
                       <span>이번 모임 발제문 & 나의 생각 메모</span>
                     </h4>
-                    <span className="text-[11px] font-bold text-[#191919] bg-[#FFFDF4] border border-[#191919]/15 px-2.5 py-0.5 rounded-md">
+                    <span className="text-[11px] font-bold text-[#191919] bg-[#FFFDF4] border border-[#191919]/15 px-2.5 py-0.5 rounded-md shrink-0">
                       {activeClub?.shareDiscussionTopics !== false ? '사전 공개' : '당일 현장 공개'}
                     </span>
                   </div>
@@ -302,7 +302,7 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                   ) : activeClub?.discussionTopics && (
                     <div className="space-y-2">
                       {activeClub.discussionTopics.map((topic, i) => (
-                        <div key={i} className="bg-[#FFFDF4] p-3 rounded-xl text-xs text-[#191919] border border-[#191919]/12">
+                        <div key={i} className="bg-[#FFFDF4] p-3 rounded-xl text-xs text-[#191919] border border-[#191919]/12 break-words">
                           <strong>Q{i + 1}.</strong> {topic}
                         </div>
                       ))}
@@ -310,10 +310,10 @@ export const MyChaptersModal: React.FC<MyChaptersModalProps> = ({
                   )}
 
                   {/* Interactive Note Pad */}
-                  <div className="bg-[#FFFDF4] rounded-xl p-4 border border-[#191919]/15 space-y-2">
-                    <div className="flex items-center justify-between">
+                  <div className="bg-[#FFFDF4] rounded-xl p-3.5 sm:p-4 border border-[#191919]/15 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
                       <label className="text-xs font-bold text-[#191919] flex items-center gap-1.5">
-                        <StickyNote className="w-3.5 h-3.5 text-[#191919]" />
+                        <StickyNote className="w-3.5 h-3.5 text-[#191919] shrink-0" />
                         <span>나의 생각 & 인상 깊었던 구절 적어두기</span>
                       </label>
                       {savedSuccessId === activeRsvp.id && (
