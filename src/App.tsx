@@ -4,8 +4,10 @@ import { INITIAL_BOOK_CLUBS } from './data/initialClubs';
 import { INITIAL_RSVPS } from './data/initialUsers';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { CategoriesSection } from './components/CategoriesSection';
 import { ClubExplorer } from './components/ClubExplorer';
+import { WhyReadoraSection } from './components/WhyReadoraSection';
+import { AboutSection } from './components/AboutSection';
+import { ClubMomentsSection } from './components/ClubMomentsSection';
 import { ClubDetailModal } from './components/ClubDetailModal';
 import { MyChaptersModal } from './components/MyChaptersModal';
 import { MyPageModal } from './components/MyPageModal';
@@ -27,7 +29,6 @@ import {
   simulateAutoCancelClub 
 } from './utils/autoCancelClubs';
 import { trackRealPageView } from './utils/analytics';
-import { Crown } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import {
   fetchAdminMembersOnServer,
@@ -364,8 +365,8 @@ export default function App() {
     showToast('안전하게 로그아웃 되었습니다.');
   };
 
-  const handleRegisterUser = (_newUser: User) => {
-    // Signup is handled via Supabase Auth + profiles trigger
+  const handleRegisterUser = (newUser: User) => {
+    setCurrentUser(newUser);
   };
 
   const handleResetPassword = (_username: string, _newPw: string) => {
@@ -550,7 +551,7 @@ export default function App() {
       <>
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#172E22] text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/20 flex items-center gap-3 animate-bounce">
+          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
             <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
           </div>
         )}
@@ -657,7 +658,7 @@ export default function App() {
       <>
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#172E22] text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/20 flex items-center gap-3 animate-bounce">
+          <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
             <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
           </div>
         )}
@@ -756,47 +757,11 @@ export default function App() {
 
   // Unified Web Application (for guests and authenticated members/hosts/admins)
   return (
-    <div className="min-h-screen bg-[#F4F0E5] text-[#19221C] flex flex-col font-sans selection:bg-[#DF612D]/20 selection:text-[#DF612D]">
+    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col font-sans selection:bg-[#FFE57E] selection:text-[#191919]">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#172E22] text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/20 flex items-center gap-3 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#191919] text-[#FBF9E9] px-5 py-3.5 rounded-xl shadow-lg border border-[#FFE57E]/40 flex items-center gap-3">
           <span className="text-xs font-medium leading-relaxed">{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Admin Quick Switch Bar */}
-      {!isAuthInitializing && currentUser?.role === 'admin' && (
-        <div className="bg-[#172E22] text-white text-xs py-2 px-4 flex items-center justify-between sticky top-0 z-50 border-b border-emerald-900 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-emerald-300">총괄 관리자 접속 중:</span>
-            <span className="font-mono text-stone-300">{currentUser.name}</span>
-          </div>
-          <button
-            onClick={() => {
-              void handleEnterAdminDashboard();
-            }}
-            className="px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-xs"
-          >
-            관리자 대시보드로 전환 →
-          </button>
-        </div>
-      )}
-
-      {/* Host Quick Switch Bar */}
-      {!isAuthInitializing && currentUser?.role === 'host' && (
-        <div className="bg-[#B45309] text-white text-xs py-2 px-4 flex items-center justify-between sticky top-0 z-50 border-b border-amber-900 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Crown className="w-3.5 h-3.5 text-amber-200" />
-            <span className="font-semibold text-amber-100">호스트 계정 접속 중:</span>
-            <span className="font-mono text-stone-200">{currentUser.name}</span>
-          </div>
-          <button
-            onClick={() => setIsHostMode(true)}
-            className="px-3 py-1 rounded-full bg-white text-amber-900 font-bold text-[11px] hover:bg-amber-50 transition-colors cursor-pointer shadow-xs"
-          >
-            호스트 모임 관리 센터로 전환 →
-          </button>
         </div>
       )}
 
@@ -845,10 +810,13 @@ export default function App() {
           setIsCreateClubOpen(true);
         }}
         onScrollToExplore={scrollToExplore}
+        onScrollToGuide={() => {
+          document.getElementById('guide-section')?.scrollIntoView({ behavior: 'smooth' });
+        }}
         joinedCount={userRSVPs.filter((r) => r.status === 'confirmed').length}
       />
 
-      {/* Hero Section */}
+      {/* Section 1: Hero */}
       <Hero
         currentUser={currentUser}
         onExploreClick={scrollToExplore}
@@ -865,20 +833,10 @@ export default function App() {
         onOpenHostDashboard={() => setIsHostMode(true)}
       />
 
-      {/* Pick a Program / Book Categories */}
-      <CategoriesSection
-        selectedCategory={selectedCategory}
-        onSelectCategory={(cat) => {
-          setSelectedCategory(cat);
-          scrollToExplore();
-        }}
-        onViewAll={() => {
-          setSelectedCategory('전체');
-          scrollToExplore();
-        }}
-      />
+      {/* Section 2: Brand Story (Directly Below Hero) */}
+      <AboutSection />
 
-      {/* Goal 1: Club Explorer & Search */}
+      {/* Section 3: Next Club Explorer */}
       <ClubExplorer
         clubs={clubs}
         onSelectClub={(club) => {
@@ -905,6 +863,12 @@ export default function App() {
         onSelectCategory={setSelectedCategory}
         currentUser={currentUser}
       />
+
+      {/* Section 4: Why Readora */}
+      <WhyReadoraSection />
+
+      {/* Section 5: Club Moments (returns null until real records exist) */}
+      <ClubMomentsSection />
 
       {/* FAQ */}
       <FaqSection />

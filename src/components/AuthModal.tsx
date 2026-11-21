@@ -27,12 +27,20 @@ import {
   RecoverySessionTokens,
   completePasswordResetWithRecoverySession,
   loginWithUsername,
+  mapProfileToUser,
   revokeEphemeralRecoverySession,
   sendFindIdOtp,
   sendResetPasswordOtp,
   verifyFindIdOtp,
   verifyResetPasswordOtp,
 } from '../lib/supabaseAuth';
+import {
+  formatBirthDateKorean,
+  getBirthDayOptions,
+  getBirthMonthOptions,
+  getBirthYearOptions,
+  validateBirthDateParts,
+} from '../utils/birthDate';
 
 export type AuthMode = 'login' | 'signup' | 'find_id' | 'reset_password';
 
@@ -79,6 +87,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupGender, setSignupGender] = useState<'여성' | '남성' | '기타'>('여성');
+  const [signupBirthYear, setSignupBirthYear] = useState('');
+  const [signupBirthMonth, setSignupBirthMonth] = useState('');
+  const [signupBirthDay, setSignupBirthDay] = useState('');
+  const [signupBirthDateError, setSignupBirthDateError] = useState('');
   const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'checking' | 'available' | 'duplicate' | 'error'>('idle');
   const [idCheckMessage, setIdCheckMessage] = useState('');
   const [checkedUsername, setCheckedUsername] = useState('');
@@ -141,6 +153,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoginError('');
     setIsLoggingIn(false);
     setSignupError('');
+    setSignupBirthDateError('');
     setSignupVerificationError('');
     setFindIdError('');
     setResetPwError('');
@@ -240,6 +253,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSignupEmail('');
     setSignupPhone('');
     setSignupGender('여성');
+    setSignupBirthYear('');
+    setSignupBirthMonth('');
+    setSignupBirthDay('');
+    setSignupBirthDateError('');
     setIdCheckStatus('idle');
     setIdCheckMessage('');
     setCheckedUsername('');
@@ -327,14 +344,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   // ===================== SIGNUP FLOW (Supabase Auth 6-digit OTP) =====================
+  const birthYearOptions = getBirthYearOptions();
+  const birthMonthOptions = getBirthMonthOptions();
+  const birthDayOptions = getBirthDayOptions();
+
   const validateSignupFieldsBeforeOtp = (): string | null => {
+    setSignupBirthDateError('');
     const cleanId = signupId.trim();
     const cleanName = signupName.trim();
     const cleanPhone = signupPhone.trim();
     const cleanEmail = signupEmail.trim();
+    const birthCheck = validateBirthDateParts(
+      signupBirthYear,
+      signupBirthMonth,
+      signupBirthDay
+    );
 
     if (!cleanId || !signupPassword.trim() || !cleanName || !cleanEmail || !cleanPhone) {
-      return '모든 필수 항목(아이디, 비밀번호, 이름, 연락처, 이메일)을 입력해 주세요.';
+      if (!birthCheck.valid) {
+        setSignupBirthDateError(birthCheck.message || '생년월일을 입력해 주세요.');
+      }
+      return '모든 필수 항목(아이디, 비밀번호, 이름, 연락처, 생년월일, 이메일)을 입력해 주세요.';
+    }
+
+    if (!birthCheck.valid || !birthCheck.formatted) {
+      const msg = birthCheck.message || '생년월일을 입력해 주세요.';
+      setSignupBirthDateError(msg);
+      return msg;
     }
 
     if (cleanId.length < 4) {
@@ -376,6 +412,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const validationError = validateSignupFieldsBeforeOtp();
     if (validationError) {
       setSignupError(validationError);
+      return;
+    }
+
+    const birthCheck = validateBirthDateParts(
+      signupBirthYear,
+      signupBirthMonth,
+      signupBirthDay
+    );
+    if (!birthCheck.valid || !birthCheck.formatted) {
+      const msg = birthCheck.message || '생년월일을 입력해 주세요.';
+      setSignupBirthDateError(msg);
+      setSignupError(msg);
       return;
     }
 
@@ -426,6 +474,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         name: signupName.trim(),
         phone: signupPhone.trim(),
         gender: signupGender,
+        birthDate: birthCheck.formatted,
       });
 
       if (!result.success) {
@@ -461,6 +510,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSignupError('');
     setSignupVerificationError('');
 
+    const birthCheck = validateBirthDateParts(
+      signupBirthYear,
+      signupBirthMonth,
+      signupBirthDay
+    );
+    if (!birthCheck.valid || !birthCheck.formatted) {
+      const msg = birthCheck.message || '생년월일을 입력해 주세요.';
+      setSignupBirthDateError(msg);
+      setSignupError(msg);
+      setSignupVerificationError(msg);
+      return;
+    }
+
     const token = signupInputCode.trim();
     if (!/^\d{6}$/.test(token)) {
       setSignupVerificationError('이메일로 받은 6자리 숫자 인증번호를 입력해 주세요.');
@@ -474,7 +536,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setIsVerifyingSignupOtp(true);
     try {
-      const result = await verifySignupOtpAndFetchProfile(signupEmail.trim(), token);
+      const result = await verifySignupOtpAndFetchProfile(
+        signupEmail.trim(),
+        token,
+        birthCheck.formatted
+      );
       if (!result.success || !result.profile) {
         setSignupVerificationError(
           result.errorMessage || '인증번호 확인에 실패했습니다. 다시 확인해 주세요.'
@@ -482,6 +548,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
+      _onRegisterUser(
+        mapProfileToUser(
+          result.profile as unknown as Record<string, unknown>,
+          signupEmail.trim()
+        )
+      );
       setIsSignupEmailVerified(true);
       setCompletedSignupProfile(result.profile);
       setSignupNotice(null);
@@ -496,6 +568,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSignupError('');
 
     if (completedSignupProfile) {
+      return;
+    }
+
+    const birthCheck = validateBirthDateParts(
+      signupBirthYear,
+      signupBirthMonth,
+      signupBirthDay
+    );
+    if (!birthCheck.valid || !birthCheck.formatted) {
+      const msg = birthCheck.message || '생년월일을 입력해 주세요.';
+      setSignupBirthDateError(msg);
+      setSignupError(msg);
       return;
     }
 
@@ -788,26 +872,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div 
-        className="bg-[#FCFAF6] w-full max-w-md rounded-2xl sm:rounded-3xl shadow-2xl border border-[#E7E0D3] overflow-hidden relative max-h-[94dvh] sm:max-h-[92vh] my-auto flex flex-col"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/60 backdrop-blur-xs">
+      <div
+        className="bg-[#FBF9E9] w-full max-w-md rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden relative max-h-[94dvh] sm:max-h-[92vh] my-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-[#172E22] text-white px-4 sm:px-6 pt-5 pb-4 relative">
+        <div className="bg-[#191919] text-[#FBF9E9] px-4 sm:px-6 pt-5 pb-4 relative border-b border-[#191919]">
           <button
             onClick={handleCloseModal}
-            className="absolute top-4 right-4 text-stone-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+            className="absolute top-4 right-4 text-[#FBF9E9]/70 hover:text-[#FFE57E] p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="닫기"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-[Arial,sans-serif] text-xl sm:text-2xl font-bold tracking-tight text-white">리도라</span>
+            <span className="text-xl sm:text-2xl font-black tracking-tight text-[#FBF9E9]">리도라</span>
+            <span className="font-display-en text-[10px] font-bold uppercase tracking-[0.16em] text-[#FFE57E]">
+              READORA
+            </span>
           </div>
-          
-          <p className="text-stone-300 text-[11px] sm:text-xs">
+
+          <p className="text-[#FBF9E9]/70 text-[11px] sm:text-xs">
             {activeTab === 'login' && '우리가 책으로 만나는 시간, 리도라에 로그인하세요.'}
             {activeTab === 'signup' && '간편한 이메일 인증으로 리도라(Readora) 회원이 되어보세요.'}
             {activeTab === 'find_id' && '가입 시 등록된 이메일 인증을 통해 아이디를 확인합니다.'}
@@ -816,39 +903,39 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Navigation Controls */}
           {activeTab === 'login' || activeTab === 'signup' ? (
-            <div className="flex mt-3 sm:mt-4 bg-black/25 p-1 rounded-xl">
+            <div className="flex mt-3 sm:mt-4 bg-white/10 p-1 rounded-lg">
               <button
                 onClick={() => { switchAuthTab('login'); setLoginError(''); }}
-                className={`flex-1 py-1.5 sm:py-2 text-xs font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-1.5 sm:py-2 text-xs font-bold rounded-md transition-all cursor-pointer ${
                   activeTab === 'login'
-                    ? 'bg-white text-[#172E22] shadow-sm'
-                    : 'text-stone-300 hover:text-white'
+                    ? 'bg-[#FFE57E] text-[#191919]'
+                    : 'text-[#FBF9E9]/75 hover:text-[#FBF9E9]'
                 }`}
               >
                 로그인 (Login)
               </button>
               <button
                 onClick={() => { switchAuthTab('signup'); setSignupError(''); }}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-md transition-all cursor-pointer ${
                   activeTab === 'signup'
-                    ? 'bg-white text-[#172E22] shadow-sm'
-                    : 'text-stone-300 hover:text-white'
+                    ? 'bg-[#FFE57E] text-[#191919]'
+                    : 'text-[#FBF9E9]/75 hover:text-[#FBF9E9]'
                 }`}
               >
                 회원가입 (이메일 인증)
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-between mt-4 bg-black/25 p-1 rounded-xl">
+            <div className="flex items-center justify-between mt-4 bg-white/10 p-1 rounded-lg">
               <button
                 onClick={() => {
                   switchAuthTab('find_id');
                   setFindIdError('');
                 }}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-md transition-all cursor-pointer ${
                   activeTab === 'find_id'
-                    ? 'bg-white text-[#172E22] shadow-sm'
-                    : 'text-stone-300 hover:text-white'
+                    ? 'bg-[#FFE57E] text-[#191919]'
+                    : 'text-[#FBF9E9]/75 hover:text-[#FBF9E9]'
                 }`}
               >
                 아이디 찾기
@@ -858,10 +945,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   switchAuthTab('reset_password');
                   setResetPwError('');
                 }}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-md transition-all cursor-pointer ${
                   activeTab === 'reset_password'
-                    ? 'bg-white text-[#172E22] shadow-sm'
-                    : 'text-stone-300 hover:text-white'
+                    ? 'bg-[#FFE57E] text-[#191919]'
+                    : 'text-[#FBF9E9]/75 hover:text-[#FBF9E9]'
                 }`}
               >
                 비밀번호 재설정
@@ -872,28 +959,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Signup Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'signup' && signupNotice && !completedSignupProfile && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
+          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
-              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
               <div className="flex-1">
                 <div className="font-bold flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 text-[#191919]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                     인증번호 이메일 발송 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setSignupNotice(null)}
-                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
                   <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{signupNotice.email}</span>
+                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{signupNotice.email}</span>
                   </p>
-                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                  <p className="text-[#191919] font-medium pt-0.5">
                     {signupNotice.message}
                   </p>
                 </div>
@@ -904,28 +991,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Find ID Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'find_id' && findIdNotice && !isFindIdVerified && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
+          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
-              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
               <div className="flex-1">
                 <div className="font-bold flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 text-[#191919]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                     본인확인 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setFindIdNotice(null)}
-                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
                   <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{findIdNotice.email}</span>
+                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{findIdNotice.email}</span>
                   </p>
-                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                  <p className="text-[#191919] font-medium pt-0.5">
                     {findIdNotice.message}
                   </p>
                 </div>
@@ -936,28 +1023,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Reset Password Email Sent Guidance Banner (No OTP code exposed) */}
         {activeTab === 'reset_password' && resetPwNotice && !isResetPwVerified && (
-          <div className="border-b px-5 py-3.5 text-xs bg-[#EBF7EE] border-[#C8E8CD] text-[#1E562D]">
+          <div className="border-b px-5 py-3.5 text-xs bg-[#B9D8E6]/25 border-[#191919]/15 text-[#191919]">
             <div className="flex items-start gap-2.5">
-              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#2D6A4F]" />
+              <Mail className="w-4 h-4 shrink-0 mt-0.5 text-[#191919]" />
               <div className="flex-1">
                 <div className="font-bold flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-[#2D6A4F]">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1 text-[#191919]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                     비밀번호 재설정 인증번호 요청 완료
                   </span>
                   <button
                     type="button"
                     onClick={() => setResetPwNotice(null)}
-                    className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                    className="text-[#191919]/50 hover:text-[#191919] cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="mt-1 text-[11px] space-y-0.5 text-stone-700">
+                <div className="mt-1 text-[11px] space-y-0.5 text-[#191919]/75">
                   <p>
-                    <strong>수신:</strong> <span className="font-mono text-[#19221C]">{resetPwNotice.email}</span>
+                    <strong>수신:</strong> <span className="font-mono text-[#191919]">{resetPwNotice.email}</span>
                   </p>
-                  <p className="text-[#2D6A4F] font-medium pt-0.5">
+                  <p className="text-[#191919] font-medium pt-0.5">
                     {resetPwNotice.message}
                   </p>
                 </div>
@@ -972,59 +1059,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {activeTab === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5 sm:space-y-4">
               {loginError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2 animate-shake">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#F16B47]/10 border border-[#F16B47]/35 text-[#B93815] rounded-xl text-xs flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#F16B47]" />
                   <span>{loginError}</span>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                <label className="block text-xs font-bold text-[#191919] mb-1.5">
                   아이디 (ID)
                 </label>
                 <div className="relative">
-                  <UserIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                  <UserIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                   <input
                     type="text"
                     value={loginId}
                     onChange={(e) => setLoginId(e.target.value)}
                     placeholder="아이디를 입력하세요"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs sm:text-sm bg-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs sm:text-sm bg-[#FFFDF4] text-[#191919]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                <label className="block text-xs font-bold text-[#191919] mb-1.5">
                   비밀번호 (Password)
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="비밀번호를 입력하세요"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs sm:text-sm bg-white"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs sm:text-sm bg-[#FFFDF4] text-[#191919]"
                   />
                 </div>
               </div>
 
               {/* Remember Me Checkbox (Default: unchecked) */}
-              <div className="flex items-center justify-between px-1">
-                <label className="inline-flex items-center gap-2 text-xs text-stone-600 cursor-pointer select-none">
+              <div className="flex items-center justify-between px-0.5">
+                <label className="inline-flex items-center gap-2 text-xs text-[#191919]/75 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-[#DF612D] focus:ring-[#DF612D] accent-[#DF612D] cursor-pointer"
+                    className="w-4 h-4 rounded border-[#191919]/30 accent-[#191919] cursor-pointer"
                   />
-                  <span className="font-medium">로그인 상태 유지</span>
+                  <span className="font-semibold">로그인 상태 유지</span>
                 </label>
               </div>
 
               {/* Find ID / Reset PW Links */}
-              <div className="flex items-center justify-between text-xs text-stone-500 pt-0.5 px-1">
+              <div className="flex items-center justify-between text-xs text-[#191919]/60 pt-0.5 px-0.5">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1033,18 +1120,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       resetFindIdFlowState();
                       switchAuthTab('find_id');
                     }}
-                    className="hover:text-[#DF612D] font-medium transition-colors cursor-pointer text-[11px] sm:text-xs"
+                    className="hover:text-[#F16B47] font-semibold transition-colors cursor-pointer text-[11px] sm:text-xs"
                   >
                     아이디 찾기
                   </button>
-                  <span className="text-stone-300">|</span>
+                  <span className="text-[#191919]/25">|</span>
                   <button
                     type="button"
                     onClick={() => {
                       resetPasswordFlowState(true);
                       switchAuthTab('reset_password');
                     }}
-                    className="hover:text-[#DF612D] font-medium transition-colors cursor-pointer text-[11px] sm:text-xs"
+                    className="hover:text-[#F16B47] font-semibold transition-colors cursor-pointer text-[11px] sm:text-xs"
                   >
                     비밀번호 재설정
                   </button>
@@ -1056,7 +1143,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     switchAuthTab('signup');
                     setSignupError('');
                   }}
-                  className="text-[#DF612D] font-semibold hover:underline cursor-pointer text-xs"
+                  className="text-[#F16B47] font-bold hover:underline cursor-pointer text-xs"
                 >
                   회원가입
                 </button>
@@ -1065,7 +1152,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] active:scale-[0.98] text-white rounded-xl font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-[#FFE57E] hover:bg-[#ffd94a] active:scale-[0.99] text-[#191919] border border-[#191919]/20 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isLoggingIn ? '로그인 중...' : '로그인하기'}
               </button>
@@ -1076,34 +1163,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {activeTab === 'signup' && (
             completedSignupProfile ? (
               <div className="space-y-4 pt-2 text-center">
-                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-xl bg-[#FFE57E] text-[#191919] border border-[#191919]/15 flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-base text-[#19221C]">
+                  <h4 className="font-extrabold text-base text-[#191919]">
                     회원가입 및 이메일 인증이 완료되었습니다!
                   </h4>
-                  <p className="text-xs text-stone-600 mt-1">
+                  <p className="text-xs text-[#191919]/65 mt-1">
                     리도라(Readora) 계정이 안전하게 생성되었으며 본인 인증 세션이 유지됩니다.
                   </p>
                 </div>
 
-                <div className="p-4 bg-white rounded-2xl border border-[#E7E0D3] text-left space-y-2 text-xs">
+                <div className="p-4 bg-[#FFFDF4] rounded-xl border border-[#191919]/15 text-left space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-stone-500">이름</span>
-                    <span className="font-semibold text-[#19221C]">{completedSignupProfile.name}</span>
+                    <span className="text-[#191919]/60">이름</span>
+                    <span className="font-bold text-[#191919]">{completedSignupProfile.name}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-                    <span className="text-stone-500">아이디</span>
-                    <span className="font-mono font-bold text-[#172E22]">@{completedSignupProfile.username}</span>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#191919]/10">
+                    <span className="text-[#191919]/60">아이디</span>
+                    <span className="font-mono font-bold text-[#191919]">@{completedSignupProfile.username}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-                    <span className="text-stone-500">인증 이메일</span>
-                    <span className="font-mono text-stone-700">{completedSignupProfile.email || signupEmail.trim()}</span>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#191919]/10">
+                    <span className="text-[#191919]/60">생년월일</span>
+                    <span className="font-medium text-[#191919]">
+                      {formatBirthDateKorean(completedSignupProfile.birth_date) ||
+                        completedSignupProfile.birth_date}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#191919]/10">
+                    <span className="text-[#191919]/60">인증 이메일</span>
+                    <span className="font-mono text-[#191919]/80">{completedSignupProfile.email || signupEmail.trim()}</span>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200 text-left">
+                <p className="text-[11px] text-[#191919]/70 leading-relaxed bg-[#FFFDF4] p-3 rounded-xl border border-[#191919]/15 text-left">
                   가입하신 아이디로 자동 로그인되었으며, 새로고침 후에도 로그인 상태가 안전하게 유지됩니다.
                 </p>
 
@@ -1113,7 +1207,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     resetSignupFlowState();
                     onClose();
                   }}
-                  className="w-full py-3 bg-[#172E22] hover:bg-[#234332] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                  className="w-full py-3 bg-[#191919] hover:bg-[#333333] text-[#FFE57E] rounded-lg font-bold text-xs transition-colors cursor-pointer"
                 >
                   확인 및 닫기
                 </button>
@@ -1121,16 +1215,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             ) : (
             <form onSubmit={handleSignupSubmit} className="space-y-3.5">
               {signupError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#F16B47]/10 border border-[#F16B47]/35 text-[#B93815] rounded-xl text-xs flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#F16B47]" />
                   <span>{signupError}</span>
                 </div>
               )}
 
               {/* ID with Duplicate Check */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  아이디 (ID) <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#191919] mb-1">
+                  아이디 (ID) <span className="text-[#F16B47]">*</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -1144,19 +1238,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="영문, 숫자 4자 이상"
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="flex-1 px-3.5 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                   <button
                     type="button"
                     onClick={handleCheckIdDuplicate}
                     disabled={isSignupCodeSent || isSignupEmailVerified || idCheckStatus === 'checking'}
-                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-semibold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                   >
                     {idCheckStatus === 'checking' ? '확인 중...' : '중복 확인'}
                   </button>
                 </div>
                 {idCheckMessage && (
-                  <p className={`text-[11px] mt-1 font-medium ${idCheckStatus === 'available' ? 'text-emerald-600' : idCheckStatus === 'checking' ? 'text-stone-500' : 'text-red-600'}`}>
+                  <p className={`text-[11px] mt-1 font-semibold ${idCheckStatus === 'available' ? 'text-emerald-700' : idCheckStatus === 'checking' ? 'text-[#191919]/60' : 'text-[#F16B47]'}`}>
                     {idCheckMessage}
                   </p>
                 )}
@@ -1165,8 +1259,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    비밀번호 <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-[#191919] mb-1">
+                    비밀번호 <span className="text-[#F16B47]">*</span>
                   </label>
                   <input
                     type="password"
@@ -1174,12 +1268,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setSignupPassword(e.target.value)}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="8~16자 영문/숫자/특수문자"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="w-full px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    비밀번호 확인 <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-[#191919] mb-1">
+                    비밀번호 확인 <span className="text-[#F16B47]">*</span>
                   </label>
                   <input
                     type="password"
@@ -1187,19 +1281,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setSignupPasswordConfirm(e.target.value)}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="동일하게 한 번 더 입력"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="w-full px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-stone-500">
+              <p className="text-[11px] text-[#191919]/60">
                 비밀번호는 <strong>8~16자</strong>로 <strong>영문, 숫자, 특수문자</strong>를 반드시 모두 포함해야 합니다.
               </p>
 
               {/* Name & Phone (Phone is MANDATORY) */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    이름 <span className="text-red-500">*</span>
+                  <label className="block text-xs font-bold text-[#191919] mb-1">
+                    이름 <span className="text-[#F16B47]">*</span>
                   </label>
                   <input
                     type="text"
@@ -1207,12 +1301,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setSignupName(e.target.value)}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="홍길동"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="w-full px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    연락처 <span className="text-red-500">* 필수</span>
+                  <label className="block text-xs font-bold text-[#191919] mb-1">
+                    연락처 <span className="text-[#F16B47]">* 필수</span>
                   </label>
                   <input
                     type="tel"
@@ -1220,15 +1314,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onChange={(e) => setSignupPhone(e.target.value)}
                     disabled={isSignupCodeSent || isSignupEmailVerified}
                     placeholder="403-123-4567"
-                    className="w-full px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="w-full px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                 </div>
               </div>
 
               {/* Gender Selection */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  성별 <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#191919] mb-1">
+                  성별 <span className="text-[#F16B47]">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['여성', '남성', '기타'] as const).map((g) => (
@@ -1237,10 +1331,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="button"
                       disabled={isSignupCodeSent || isSignupEmailVerified}
                       onClick={() => setSignupGender(g)}
-                      className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer disabled:opacity-60 ${
+                      className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer disabled:opacity-60 ${
                         signupGender === g
-                          ? 'bg-[#172E22] text-white border-[#172E22] shadow-xs'
-                          : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                          ? 'bg-[#191919] text-[#FFE57E] border-[#191919]'
+                          : 'bg-[#FFFDF4] text-[#191919]/75 border-[#191919]/20 hover:border-[#191919]'
                       }`}
                     >
                       {g}
@@ -1249,10 +1343,99 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
 
+              {/* Birth Date Selection (Mandatory: Year / Month / Day) */}
+              <div>
+                <label className="block text-xs font-bold text-[#191919] mb-1">
+                  생년월일 <span className="text-[#F16B47]">* 필수</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    aria-label="생년월일 연도"
+                    value={signupBirthYear}
+                    onChange={(e) => {
+                      const nextYear = e.target.value;
+                      setSignupBirthYear(nextYear);
+                      if (nextYear && signupBirthMonth && signupBirthDay) {
+                        const check = validateBirthDateParts(nextYear, signupBirthMonth, signupBirthDay);
+                        setSignupBirthDateError(check.valid ? '' : check.message || '');
+                      } else {
+                        setSignupBirthDateError('');
+                      }
+                    }}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                      signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
+                    }`}
+                  >
+                    <option value="">연도</option>
+                    {birthYearOptions.map((y) => (
+                      <option key={y} value={String(y)}>
+                        {y}년
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    aria-label="생년월일 월"
+                    value={signupBirthMonth}
+                    onChange={(e) => {
+                      const nextMonth = e.target.value;
+                      setSignupBirthMonth(nextMonth);
+                      if (signupBirthYear && nextMonth && signupBirthDay) {
+                        const check = validateBirthDateParts(signupBirthYear, nextMonth, signupBirthDay);
+                        setSignupBirthDateError(check.valid ? '' : check.message || '');
+                      } else {
+                        setSignupBirthDateError('');
+                      }
+                    }}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                      signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
+                    }`}
+                  >
+                    <option value="">월</option>
+                    {birthMonthOptions.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    aria-label="생년월일 일"
+                    value={signupBirthDay}
+                    onChange={(e) => {
+                      const nextDay = e.target.value;
+                      setSignupBirthDay(nextDay);
+                      if (signupBirthYear && signupBirthMonth && nextDay) {
+                        const check = validateBirthDateParts(signupBirthYear, signupBirthMonth, nextDay);
+                        setSignupBirthDateError(check.valid ? '' : check.message || '');
+                      } else {
+                        setSignupBirthDateError('');
+                      }
+                    }}
+                    disabled={isSignupCodeSent || isSignupEmailVerified}
+                    className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50 ${
+                      signupBirthDateError ? 'border-[#F16B47]' : 'border-[#191919]/20'
+                    }`}
+                  >
+                    <option value="">일</option>
+                    {birthDayOptions.map((d) => (
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {signupBirthDateError && (
+                  <p className="text-[11px] mt-1 font-semibold text-[#F16B47]">{signupBirthDateError}</p>
+                )}
+              </div>
+
               {/* Email with Verification */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  이메일 (본인인증 필수) <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#191919] mb-1">
+                  이메일 (본인인증 필수) <span className="text-[#F16B47]">*</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -1270,13 +1453,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     }}
                     placeholder="calgary@example.com"
                     disabled={isSignupCodeSent || isSignupEmailVerified}
-                    className="flex-1 px-3 py-2 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white disabled:bg-stone-100 disabled:text-stone-500"
+                    className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919] disabled:bg-[#191919]/5 disabled:text-[#191919]/50"
                   />
                   <button
                     type="button"
                     onClick={handleSendSignupCode}
                     disabled={isSignupEmailVerified || isSendingEmail || (isSignupCodeSent && signupResendCooldown > 0)}
-                    className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                   >
                     {isSendingEmail
                       ? '발송 중...'
@@ -1291,10 +1474,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               {/* Code Verification Box */}
               {isSignupCodeSent && !isSignupEmailVerified && (
-                <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-stone-600">
-                    <span className="font-semibold text-stone-700">이메일 인증번호 6자리</span>
-                    <span className="text-red-500 font-mono flex items-center gap-1 text-[11px]">
+                <div className="p-3 bg-[#FFFDF4] rounded-xl border border-[#191919]/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-[#191919]/70">
+                    <span className="font-bold text-[#191919]">이메일 인증번호 6자리</span>
+                    <span className="text-[#F16B47] font-mono font-bold flex items-center gap-1 text-[11px] tabular-nums">
                       <Clock className="w-3 h-3" />
                       {formatTime(signupCountdown)}
                     </span>
@@ -1307,26 +1490,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       value={signupInputCode}
                       onChange={(e) => setSignupInputCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="6자리 숫자"
-                      className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
+                      className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                     />
                     <button
                       type="button"
                       onClick={handleVerifySignupCode}
                       disabled={isVerifyingSignupOtp}
-                      className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
                     >
                       {isVerifyingSignupOtp ? '확인 중...' : '확인'}
                     </button>
                   </div>
                   {signupVerificationError && (
-                    <p className="text-[11px] text-red-600 font-medium">{signupVerificationError}</p>
+                    <p className="text-[11px] text-[#F16B47] font-semibold">{signupVerificationError}</p>
                   )}
                 </div>
               )}
 
               {isSignupEmailVerified && (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>이메일 본인인증이 완료되었습니다.</span>
                 </div>
               )}
@@ -1334,7 +1517,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={!isSignupCodeSent || isVerifyingSignupOtp}
-                className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+                className="w-full py-3 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg font-bold text-sm transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed mt-2"
               >
                 {isVerifyingSignupOtp
                   ? '인증 확인 중...'
@@ -1349,21 +1532,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* ==================== 3. FIND ID VIEW ==================== */}
           {activeTab === 'find_id' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+              <div className="flex items-center justify-between pb-2 border-b border-[#191919]/15">
                 <button
                   type="button"
                   onClick={() => switchAuthTab('login')}
-                  className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 font-medium cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs text-[#191919]/65 hover:text-[#191919] font-semibold cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>로그인 화면으로</span>
                 </button>
-                <span className="text-xs font-bold text-[#172E22]">아이디 찾기</span>
+                <span className="text-xs font-bold text-[#191919]">아이디 찾기</span>
               </div>
 
               {findIdError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2 animate-shake">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#F16B47]/10 border border-[#F16B47]/35 text-[#B93815] rounded-xl text-xs flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#F16B47]" />
                   <span>{findIdError}</span>
                 </div>
               )}
@@ -1371,12 +1554,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {!isFindIdVerified ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    <label className="block text-xs font-bold text-[#191919] mb-1.5">
                       가입 시 등록한 이메일 주소
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                         <input
                           type="email"
                           value={findIdEmail}
@@ -1387,14 +1570,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             }
                           }}
                           placeholder="가입한 이메일을 입력하세요"
-                          className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                          className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919]"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleSendFindIdCode}
                         disabled={isSendingFindIdOtp || (isFindIdCodeSent && findIdResendCooldown > 0)}
-                        className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                        className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
                         {isSendingFindIdOtp
                           ? '발송 중...'
@@ -1409,10 +1592,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   {/* Verification Input Box */}
                   {isFindIdCodeSent && (
-                    <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-stone-600">
-                        <span className="font-semibold text-stone-700">이메일 인증번호 6자리</span>
-                        <span className="text-red-500 font-mono flex items-center gap-1 text-[11px]">
+                    <div className="p-3 bg-[#FFFDF4] rounded-xl border border-[#191919]/20 space-y-2">
+                      <div className="flex items-center justify-between text-xs text-[#191919]/70">
+                        <span className="font-bold text-[#191919]">이메일 인증번호 6자리</span>
+                        <span className="text-[#F16B47] font-mono font-bold flex items-center gap-1 text-[11px] tabular-nums">
                           <Clock className="w-3 h-3" />
                           {formatTime(findIdCountdown)}
                         </span>
@@ -1425,13 +1608,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={findIdInputCode}
                           onChange={(e) => setFindIdInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
-                          className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
+                          className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyFindIdCode}
                           disabled={isVerifyingFindIdOtp}
-                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
                         >
                           {isVerifyingFindIdOtp ? '확인 중...' : '인증 확인'}
                         </button>
@@ -1439,37 +1622,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                   )}
 
-                  <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200">
-                    💡 가입 시 인증하셨던 이메일 주소로 본인확인용 6자리 인증번호가 발송됩니다. 인증이 완료되면 회원님의 아이디를 확인하실 수 있습니다.
+                  <p className="text-[11px] text-[#191919]/70 leading-relaxed bg-[#FFFDF4] p-3 rounded-xl border border-[#191919]/15">
+                    가입 시 인증하셨던 이메일 주소로 본인확인용 6자리 인증번호가 발송됩니다. 인증이 완료되면 회원님의 아이디를 확인하실 수 있습니다.
                   </p>
                 </div>
               ) : (
                 /* Found User Result */
                 <div className="space-y-4 pt-1">
-                  <div className="p-5 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-center space-y-2">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-1">
+                  <div className="p-5 bg-[#FFFDF4] border border-[#191919]/15 rounded-xl text-center space-y-2">
+                    <div className="w-12 h-12 rounded-xl bg-[#FFE57E] text-[#191919] flex items-center justify-center mx-auto mb-1">
                       <CheckCircle2 className="w-7 h-7" />
                     </div>
-                    <h4 className="font-bold text-sm text-emerald-950">본인인증이 완료되었습니다</h4>
-                    <p className="text-xs text-emerald-800">
+                    <h4 className="font-bold text-sm text-[#191919]">본인인증이 완료되었습니다</h4>
+                    <p className="text-xs text-[#191919]/70">
                       회원님의 계정 정보는 다음과 같습니다.
                     </p>
 
-                    <div className="my-3 p-3.5 bg-white rounded-xl border border-emerald-200 text-left space-y-2">
+                    <div className="my-3 p-3.5 bg-[#FBF9E9] rounded-xl border border-[#191919]/15 text-left space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-stone-500">회원 아이디:</span>
+                        <span className="text-xs text-[#191919]/60">회원 아이디:</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-base text-[#172E22]">
+                          <span className="font-mono font-bold text-base text-[#191919]">
                             {foundUser?.username}
                           </span>
                           <button
                             type="button"
                             onClick={handleCopyId}
-                            className="p-1 rounded-md hover:bg-stone-100 text-stone-500 hover:text-stone-800 transition-colors"
+                            className="p-1 rounded-md hover:bg-white text-[#191919]/60 hover:text-[#191919] transition-colors cursor-pointer"
                             title="아이디 복사"
                           >
                             {copiedId ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <Check className="w-3.5 h-3.5 text-emerald-700" />
                             ) : (
                               <Copy className="w-3.5 h-3.5" />
                             )}
@@ -1478,16 +1661,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </div>
 
                       {foundUser?.name && (
-                        <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100">
-                          <span className="text-stone-500">이름:</span>
-                          <span className="font-medium text-stone-800">{foundUser.name}</span>
+                        <div className="flex items-center justify-between text-xs pt-2 border-t border-[#191919]/10">
+                          <span className="text-[#191919]/60">이름:</span>
+                          <span className="font-semibold text-[#191919]">{foundUser.name}</span>
                         </div>
                       )}
 
                       {foundUser?.createdAt && (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-stone-500">가입 일자:</span>
-                          <span className="font-medium text-stone-800">{foundUser.createdAt}</span>
+                          <span className="text-[#191919]/60">가입 일자:</span>
+                          <span className="font-semibold text-[#191919]">{foundUser.createdAt}</span>
                         </div>
                       )}
                     </div>
@@ -1500,7 +1683,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         if (foundUser) setLoginId(foundUser.username);
                         switchAuthTab('login');
                       }}
-                      className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                      className="w-full py-3 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg font-bold text-xs transition-colors cursor-pointer"
                     >
                       이 아이디로 로그인하기
                     </button>
@@ -1513,7 +1696,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         setResetPwEmail(verifiedEmail);
                         switchAuthTab('reset_password');
                       }}
-                      className="w-full py-2.5 bg-white hover:bg-stone-50 text-stone-700 border border-stone-300 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                      className="w-full py-2.5 bg-[#FFFDF4] hover:bg-[#191919] hover:text-white text-[#191919] border border-[#191919]/20 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
                     >
                       비밀번호도 재설정하기
                     </button>
@@ -1526,21 +1709,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* ==================== 4. RESET PASSWORD VIEW ==================== */}
           {activeTab === 'reset_password' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+              <div className="flex items-center justify-between pb-2 border-b border-[#191919]/15">
                 <button
                   type="button"
                   onClick={() => switchAuthTab('login')}
-                  className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 font-medium cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs text-[#191919]/65 hover:text-[#191919] font-semibold cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>로그인 화면으로</span>
                 </button>
-                <span className="text-xs font-bold text-[#172E22]">비밀번호 재설정</span>
+                <span className="text-xs font-bold text-[#191919]">비밀번호 재설정</span>
               </div>
 
               {resetPwError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2 animate-shake">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#F16B47]/10 border border-[#F16B47]/35 text-[#B93815] rounded-xl text-xs flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-[#F16B47]" />
                   <span>{resetPwError}</span>
                 </div>
               )}
@@ -1549,12 +1732,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {!isResetPwVerified ? (
                 <div className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                    <label className="block text-xs font-bold text-[#191919] mb-1.5">
                       가입 이메일 주소
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                         <input
                           type="email"
                           value={resetPwEmail}
@@ -1565,14 +1748,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             }
                           }}
                           placeholder="calgary@example.com"
-                          className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                          className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919]"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleSendResetPwCode}
                         disabled={isSendingResetPwOtp || (isResetPwCodeSent && resetPwResendCooldown > 0)}
-                        className="px-3.5 py-2 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-medium shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
+                        className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#333333] text-[#FFE57E] text-xs font-bold shrink-0 disabled:opacity-40 transition-colors cursor-pointer"
                       >
                         {isSendingResetPwOtp
                           ? '발송 중...'
@@ -1587,10 +1770,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   {/* Verification Input Box */}
                   {isResetPwCodeSent && (
-                    <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-stone-600">
-                        <span className="font-semibold text-stone-700">이메일 인증번호 6자리</span>
-                        <span className="text-red-500 font-mono flex items-center gap-1 text-[11px]">
+                    <div className="p-3 bg-[#FFFDF4] rounded-xl border border-[#191919]/20 space-y-2">
+                      <div className="flex items-center justify-between text-xs text-[#191919]/70">
+                        <span className="font-bold text-[#191919]">이메일 인증번호 6자리</span>
+                        <span className="text-[#F16B47] font-mono font-bold flex items-center gap-1 text-[11px] tabular-nums">
                           <Clock className="w-3 h-3" />
                           {formatTime(resetPwCountdown)}
                         </span>
@@ -1603,13 +1786,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={resetPwInputCode}
                           onChange={(e) => setResetPwInputCode(e.target.value.replace(/\D/g, ''))}
                           placeholder="6자리 숫자"
-                          className="flex-1 px-3 py-2 rounded-lg border border-stone-300 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#DF612D]"
+                          className="flex-1 px-3 py-2 rounded-lg border border-[#191919]/25 text-center font-mono font-bold tracking-widest text-sm bg-white focus:outline-none focus:border-[#191919] tabular-nums"
                         />
                         <button
                           type="button"
                           onClick={handleVerifyResetPwCode}
                           disabled={isVerifyingResetPwOtp}
-                          className="px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+                          className="px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
                         >
                           {isVerifyingResetPwOtp ? '확인 중...' : '인증 확인'}
                         </button>
@@ -1617,58 +1800,58 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                   )}
 
-                  <p className="text-[11px] text-stone-500 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200">
-                    💡 회원가입 시 등록하신 이메일 주소를 입력하시면 비밀번호 재설정용 6자리 인증번호가 발송됩니다.
+                  <p className="text-[11px] text-[#191919]/70 leading-relaxed bg-[#FFFDF4] p-3 rounded-xl border border-[#191919]/15">
+                    회원가입 시 등록하신 이메일 주소를 입력하시면 비밀번호 재설정용 6자리 인증번호가 발송됩니다.
                   </p>
                 </div>
               ) : !resetPwSuccess ? (
                 /* Step 3: Enter New Password */
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>이메일 본인인증 완료 ({resetPwEmail.trim()}). 새 비밀번호를 설정하세요.</span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
-                      새 비밀번호 (New Password) <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-[#191919] mb-1">
+                      새 비밀번호 (New Password) <span className="text-[#F16B47]">*</span>
                     </label>
                     <div className="relative">
-                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="8~16자 영문/숫자/특수문자"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-stone-700 mb-1">
-                      새 비밀번호 확인 (Confirm) <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-[#191919] mb-1">
+                      새 비밀번호 확인 (Confirm) <span className="text-[#F16B47]">*</span>
                     </label>
                     <div className="relative">
-                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#191919]/40" />
                       <input
                         type="password"
                         value={newPasswordConfirm}
                         onChange={(e) => setNewPasswordConfirm(e.target.value)}
                         placeholder="새 비밀번호를 한 번 더 입력하세요"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#DF612D] text-xs bg-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs bg-[#FFFDF4] text-[#191919]"
                       />
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-stone-500">
+                  <p className="text-[11px] text-[#191919]/60">
                     비밀번호는 <strong>8~16자</strong>로 <strong>영문, 숫자, 특수문자</strong>를 반드시 모두 포함해야 합니다.
                   </p>
 
                   <button
                     type="submit"
                     disabled={isUpdatingResetPw}
-                    className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-3 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg font-bold text-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isUpdatingResetPw ? '비밀번호 변경 중...' : '새 비밀번호로 재설정 완료'}
                   </button>
@@ -1676,14 +1859,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               ) : (
                 /* Step 4: Success Message */
                 <div className="space-y-4 pt-2 text-center">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <div className="w-14 h-14 rounded-xl bg-[#FFE57E] text-[#191919] flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-base text-[#19221C]">
+                    <h4 className="font-extrabold text-base text-[#191919]">
                       비밀번호가 안전하게 변경되었습니다!
                     </h4>
-                    <p className="text-xs text-stone-600 mt-1">
+                    <p className="text-xs text-[#191919]/65 mt-1">
                       임시 복구 세션은 안전하게 종료되었습니다. 새로 설정하신 비밀번호로 로그인해 주세요.
                     </p>
                   </div>
@@ -1695,7 +1878,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setLoginPassword('');
                       switchAuthTab('login');
                     }}
-                    className="w-full py-3 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                    className="w-full py-3 bg-[#191919] hover:bg-[#333333] text-[#FFE57E] rounded-lg font-bold text-xs transition-colors cursor-pointer"
                   >
                     로그인 화면으로 이동
                   </button>

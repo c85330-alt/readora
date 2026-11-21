@@ -14,6 +14,7 @@ export interface AdminUserProfile {
   email: string;
   phone: string;
   gender: string;
+  birthDate: string | null;
   role: 'admin' | 'host' | 'user';
   status: 'active' | 'suspended';
   createdAt: string;
@@ -543,6 +544,10 @@ export async function handleAdminGetMembers(authHeader: string | undefined): Pro
         email,
         phone: typeof row.phone === 'string' ? row.phone : '',
         gender: typeof row.gender === 'string' ? row.gender : '기타',
+        birthDate:
+          typeof row.birth_date === 'string' && row.birth_date.trim()
+            ? row.birth_date.trim().slice(0, 10)
+            : null,
         role: normalizeRole(row.role),
         status: normalizeStatus(row.status),
         createdAt: formatCreatedAt(rawCreatedAt),

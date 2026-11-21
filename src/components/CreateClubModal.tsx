@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Plus, BookOpen, MapPin, Calendar, Users, DollarSign, Sparkles, Check, Upload, Image as ImageIcon, Eye, EyeOff, Clock, UserCheck } from 'lucide-react';
+import { X, Plus, BookOpen, MapPin, Calendar, Users, DollarSign, Sparkles, Check, Upload, Image as ImageIcon, Eye, EyeOff, Clock, UserCheck, AlertCircle } from 'lucide-react';
 import { BookClub, BookCategory, CalgaryArea, User } from '../types';
 import { MiniDatePicker } from './MiniDatePicker';
 import { parseClubDateTime } from '../utils/autoCancelClubs';
@@ -83,14 +83,17 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
   const [topic1, setTopic1] = useState('');
   const [topic2, setTopic2] = useState('');
   const [topic3, setTopic3] = useState('');
+  const [formError, setFormError] = useState('');
 
   // Handle direct file upload for custom book cover
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 8 * 1024 * 1024) {
+        setFormError('이미지 파일 크기는 최대 8MB까지 가능합니다.');
         return;
       }
+      setFormError('');
       setCustomImageName(file.name);
       const reader = new FileReader();
       reader.onload = () => {
@@ -104,6 +107,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
 
     // Validate minimum 7 days from today
     const parsedDate = parseClubDateTime(dateTime);
@@ -112,7 +116,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
     minAllowed.setDate(minAllowed.getDate() + 7);
 
     if (parsedDate && parsedDate.getTime() < minAllowed.getTime()) {
-      alert('모임 날짜는 모임 개설일 기준 최소 7일 후부터 설정할 수 있습니다.');
+      setFormError('모임 날짜는 모임 개설일 기준 최소 7일 후부터 설정할 수 있습니다.');
       return;
     }
 
@@ -161,22 +165,22 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-[#191919]/65 backdrop-blur-xs overflow-y-auto">
       <div 
-        className="relative w-full max-w-3xl bg-[#F4F0E5] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#E8DFCE] my-auto sm:my-6 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-3xl bg-[#FBF9E9] rounded-2xl shadow-2xl border border-[#191919]/20 my-auto sm:my-6 overflow-hidden max-h-[94dvh] sm:max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 bg-white border-b border-[#EBE3D5] flex-shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#2D6A4F] text-white flex items-center justify-center shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 bg-[#191919] text-[#FBF9E9] border-b border-[#191919] flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#FFE57E] text-[#191919] flex items-center justify-center shrink-0">
               <Plus className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-[#19221C] truncate">
+              <h2 className="text-sm sm:text-base font-extrabold text-[#FBF9E9] truncate">
                 새 독서모임 개설하기
               </h2>
-              <p className="text-[10px] sm:text-[11px] text-[#637267] truncate">
+              <p className="text-[10px] sm:text-[11px] text-[#FBF9E9]/70 truncate">
                 운영자 및 인증 호스트를 위한 실시간 모임 등록 시스템입니다.
               </p>
             </div>
@@ -184,24 +188,31 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="p-1.5 rounded-full bg-[#F4F0E5] hover:bg-[#EDE5D6] text-[#4A574E] transition-colors cursor-pointer shrink-0 ml-2"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#FBF9E9]/80 hover:text-[#FBF9E9] transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Form */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+          {formError && (
+            <div className="p-3 bg-[#F16B47]/15 border border-[#F16B47]/40 text-[#191919] rounded-xl text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-[#F16B47] shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
+
           {/* Basic Book Info */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E9E1D2] space-y-4 shadow-xs">
-            <h3 className="text-xs font-bold text-[#6B7B71] uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-[#DF612D]" />
+          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+            <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-[#F16B47]" />
               도서 및 모임 기본 정보
             </h3>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1">
+                <label className="block font-bold text-[#191919]/80 mb-1">
                   모임 제목 *
                 </label>
                 <input
@@ -210,13 +221,13 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="예: 캘거리 겨울을 녹이는 따뜻한 골목길 이야기"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#3D4B41] mb-1">
+                  <label className="block font-bold text-[#191919]/80 mb-1">
                     도서명 *
                   </label>
                   <input
@@ -225,12 +236,12 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                     value={bookTitle}
                     onChange={(e) => setBookTitle(e.target.value)}
                     placeholder="예: 불편한 편의점"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#3D4B41] mb-1">
+                  <label className="block font-bold text-[#191919]/80 mb-1">
                     저자 *
                   </label>
                   <input
@@ -239,20 +250,20 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
                     placeholder="예: 김호연"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#3D4B41] mb-1">
+                  <label className="block font-bold text-[#191919]/80 mb-1">
                     카테고리 *
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as BookCategory)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] cursor-pointer"
                   >
                     <option value="문학/소설">문학 & 소설</option>
                     <option value="인문/철학">인문 & 철학</option>
@@ -265,19 +276,19 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
 
                 {/* Automatically Determined Host Info (No manual typing required) */}
                 <div>
-                  <label className="block font-semibold text-[#3D4B41] mb-1">
+                  <label className="block font-bold text-[#191919]/80 mb-1">
                     담당 호스트 (로그인 계정 자동 지정)
                   </label>
-                  <div className="p-2.5 rounded-xl bg-[#F0EBE0] border border-[#DDD4C3] flex items-center justify-between text-xs">
+                  <div className="p-2 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2 truncate">
-                      <div className="w-6 h-6 rounded-full bg-[#DF612D]/15 text-[#DF612D] flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 rounded-md bg-[#FFE57E] text-[#191919] flex items-center justify-center shrink-0">
                         <UserCheck className="w-3.5 h-3.5" />
                       </div>
-                      <span className="font-bold text-[#19221C] truncate">
+                      <span className="font-extrabold text-[#191919] truncate">
                         {effectiveHostName}
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold bg-[#2D6A4F]/10 text-[#2D6A4F] px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] font-extrabold bg-[#B9D8E6] text-[#191919] px-2 py-0.5 rounded-md shrink-0">
                       자동 연동
                     </span>
                   </div>
@@ -286,7 +297,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
 
               {/* 도서 선정 이유 */}
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1">
+                <label className="block font-bold text-[#191919]/80 mb-1">
                   도서 선정 이유 *
                 </label>
                 <textarea
@@ -295,20 +306,20 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                   value={whyThisBook}
                   onChange={(e) => setWhyThisBook(e.target.value)}
                   placeholder="호스트로서 이 책을 선정한 이유와 모임에서 멤버들과 함께 나누고 싶은 이야기를 작성해주세요."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C] focus:outline-none focus:border-[#DF612D] leading-relaxed resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 text-xs text-[#191919] focus:outline-none focus:border-[#191919] leading-relaxed resize-none"
                 />
               </div>
 
               {/* Cover Image Picker & Custom Image Upload */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block font-semibold text-[#3D4B41]">
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="block font-bold text-[#191919]/80">
                     도서 커버 이미지 선택 및 직접 업로드 *
                   </label>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#24543E] text-white text-[11px] font-semibold cursor-pointer shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-[11px] font-extrabold cursor-pointer transition-colors"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>원하는 이미지 직접 업로드</span>
@@ -323,22 +334,22 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                 </div>
 
                 {customImageName && (
-                  <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
-                    <span className="truncate">📁 업로드된 맞춤 이미지: <strong>{customImageName}</strong></span>
-                    <span className="text-[10px] font-bold bg-emerald-200/60 px-2 py-0.5 rounded-full">적용 완료</span>
+                  <div className="p-2.5 bg-[#B9D8E6]/35 rounded-lg border border-[#191919]/20 flex items-center justify-between text-xs text-[#191919]">
+                    <span className="truncate">업로드된 맞춤 이미지: <strong>{customImageName}</strong></span>
+                    <span className="text-[10px] font-extrabold bg-[#FFE57E] text-[#191919] px-2 py-0.5 rounded-md">적용 완료</span>
                   </div>
                 )}
 
                 <div className="flex items-center gap-3">
-                  <div className="w-16 h-22 rounded-xl overflow-hidden border-2 border-[#DF612D] flex-shrink-0 shadow-sm relative group bg-stone-100">
-                    <img src={coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-[9px] text-white font-bold">현재 적용</span>
+                  <div className="w-16 h-22 rounded-lg overflow-hidden border-2 border-[#F16B47] flex-shrink-0 relative group bg-[#FBF9E9]">
+                    <img src={coverImage} alt="Cover Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-[#191919]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <span className="text-[9px] text-[#FFE57E] font-extrabold">현재 적용</span>
                     </div>
                   </div>
 
                   <div className="flex-1">
-                    <p className="text-[11px] text-[#637267] mb-1.5">
+                    <p className="text-[11px] text-[#191919]/65 mb-1.5">
                       컴퓨터나 모바일에서 원하는 도서 표지 사진을 직접 업로드하거나, 아래 기본 프리셋 중에서 선택할 수 있습니다.
                     </p>
                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -350,10 +361,10 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                             setCustomImageName('');
                           }}
                           className={`w-12 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition-all ${
-                            coverImage === url ? 'border-[#DF612D] scale-105 shadow-xs' : 'border-[#E0D7C6] opacity-70 hover:opacity-100'
+                            coverImage === url ? 'border-[#F16B47] scale-105' : 'border-[#191919]/15 opacity-70 hover:opacity-100'
                           }`}
                         >
-                          <img src={url} alt={`preset-${i}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`preset-${i}`} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>
@@ -363,21 +374,21 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
             </div>
           </div>
 
-          {/* Calgary Venue & Schedule (거점 프리셋 빠른 선택 삭제됨) */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E9E1D2] space-y-4 shadow-xs">
-            <h3 className="text-xs font-bold text-[#6B7B71] uppercase tracking-wider flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#2D6A4F]" />
+          {/* Calgary Venue & Schedule */}
+          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
+            <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[#F16B47]" />
               캘거리 모임 장소 및 일정 정보
             </h3>
 
             <div className="text-xs">
-              <label className="block font-semibold text-[#3D4B41] mb-1">
+              <label className="block font-bold text-[#191919]/80 mb-1">
                 지역 선택 *
               </label>
               <select
                 value={area}
                 onChange={(e) => setArea(e.target.value as CalgaryArea)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] cursor-pointer"
               >
                 <option value="다운타운 (Downtown)">다운타운 (Downtown)</option>
                 <option value="벨트라인 (17th Ave SW)">벨트라인 (17th Ave SW)</option>
@@ -389,7 +400,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
             </div>
 
             <div className="text-xs">
-              <label className="block font-semibold text-[#3D4B41] mb-1">
+              <label className="block font-bold text-[#191919]/80 mb-1">
                 장소 이름 *
               </label>
               <input
@@ -398,27 +409,30 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                 value={venueName}
                 onChange={(e) => setVenueName(e.target.value)}
                 placeholder="예: Alforno Bakery & Cafe (캘거리 카페, 도서관 세미나룸 등)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1">
+                <label className="block font-bold text-[#191919]/80 mb-1">
                   모임 일시 *
                 </label>
                 <MiniDatePicker
                   value={dateTime}
-                  onChange={setDateTime}
+                  onChange={(val) => {
+                    setDateTime(val);
+                    if (formError) setFormError('');
+                  }}
                   placeholder="예: 2026.12.12"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1 flex items-center justify-between">
+                <label className="block font-bold text-[#191919]/80 mb-1 flex items-center justify-between">
                   <span>진행 시간 설정 *</span>
-                  <Clock className="w-3.5 h-3.5 text-[#DF612D]" />
+                  <Clock className="w-3.5 h-3.5 text-[#F16B47]" />
                 </label>
                 <select
                   value={['90분', '2시간', '2시간 30분', '3시간'].includes(duration) ? duration : 'custom'}
@@ -431,7 +445,7 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                       setDuration(val);
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C] cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] cursor-pointer"
                 >
                   <option value="90분">90분</option>
                   <option value="2시간">2시간</option>
@@ -445,13 +459,13 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                     value={customDuration}
                     onChange={(e) => setCustomDuration(e.target.value)}
                     placeholder="예: 90분 또는 100분"
-                    className="w-full mt-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#DF612D] text-xs text-[#19221C]"
+                    className="w-full mt-1.5 px-3 py-1.5 rounded-lg bg-[#FBF9E9] border border-[#F16B47] text-xs text-[#191919]"
                   />
                 )}
               </div>
 
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1">
+                <label className="block font-bold text-[#191919]/80 mb-1">
                   최대 정원 (명) *
                 </label>
                 <input
@@ -460,12 +474,12 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                   max={12}
                   value={maxSeats}
                   onChange={(e) => setMaxSeats(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] tabular-nums"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#3D4B41] mb-1">
+                <label className="block font-bold text-[#191919]/80 mb-1">
                   참가비 (CAD $) *
                 </label>
                 <input
@@ -473,35 +487,35 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                   min={0}
                   value={feeCAD}
                   onChange={(e) => setFeeCAD(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C]"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919] tabular-nums"
                 />
               </div>
             </div>
           </div>
 
           {/* Discussion Topics & Pre-sharing Toggle */}
-          <div className="bg-[#EBF3EC] rounded-3xl p-5 border border-[#D1E5D2] space-y-4">
+          <div className="bg-[#FFFDF4] rounded-2xl p-4 sm:p-5 border border-[#191919]/15 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-[#2D6A4F] uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
+              <h3 className="text-xs font-extrabold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#F16B47]" />
                 함께 나눌 발제 질문 설정
               </h3>
             </div>
 
             {/* Toggle: Share discussion topics in advance or keep secret until session */}
-            <div className="bg-white p-3.5 rounded-2xl border border-[#D1E5D2] space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            <div className="bg-[#FBF9E9] p-3.5 rounded-xl border border-[#191919]/15 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
                   {shareDiscussionTopics ? (
-                    <Eye className="w-4 h-4 text-[#2D6A4F]" />
+                    <Eye className="w-4 h-4 text-[#191919]" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-[#DF612D]" />
+                    <EyeOff className="w-4 h-4 text-[#F16B47]" />
                   )}
                   <div>
-                    <p className="font-bold text-[#19221C] text-xs">
+                    <p className="font-extrabold text-[#191919] text-xs">
                       발제 질문 사전 공개 여부 선택
                     </p>
-                    <p className="text-[11px] text-[#637267]">
+                    <p className="text-[11px] text-[#191919]/65">
                       {shareDiscussionTopics
                         ? '모임 상세 페이지에 발제 질문을 사전에 공개합니다.'
                         : '모임 상세 페이지에서 발제 질문을 숨기며, 당일 현장에서 함께 공개합니다.'}
@@ -509,36 +523,36 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
                   <input
                     type="checkbox"
                     checked={shareDiscussionTopics}
                     onChange={(e) => setShareDiscussionTopics(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2D6A4F]"></div>
+                  <div className="w-11 h-6 bg-[#191919]/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#FFFDF4] after:border-[#191919]/20 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#191919]"></div>
                 </label>
               </div>
 
-              <div className={`p-2.5 rounded-xl text-[11px] ${
+              <div className={`p-2.5 rounded-lg text-[11px] border ${
                 shareDiscussionTopics 
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
-                  : 'bg-amber-50 text-amber-800 border border-amber-100'
+                  ? 'bg-[#B9D8E6]/35 text-[#191919] border-[#191919]/15'
+                  : 'bg-[#FFE57E]/35 text-[#191919] border-[#191919]/15'
               }`}>
                 {shareDiscussionTopics ? (
                   <span>
-                    ✅ <strong>사전 공개 설정됨:</strong> 신청자들이 모임 신청 전/후에 상세 페이지에서 발제 질문을 읽고 생각을 정리해 올 수 있습니다.
+                    <strong>사전 공개 설정됨:</strong> 신청자들이 모임 신청 전/후에 상세 페이지에서 발제 질문을 읽고 생각을 정리해 올 수 있습니다.
                   </span>
                 ) : (
                   <span>
-                    🔒 <strong>비공개 설정됨 (상세페이지 숨김):</strong> 모임 상세 페이지에서 발제 질문 목록이 노출되지 않으며, 현장에서 신선한 대화를 위해 당일 공개됩니다.
+                    <strong>비공개 설정됨 (상세페이지 숨김):</strong> 모임 상세 페이지에서 발제 질문 목록이 노출되지 않으며, 현장에서 신선한 대화를 위해 당일 공개됩니다.
                   </span>
                 )}
               </div>
             </div>
 
             <div className="space-y-2 text-xs">
-              <label className="block font-semibold text-[#2D6A4F]">
+              <label className="block font-bold text-[#191919]/80">
                 발제 질문 내용 입력 (최소 2문항 권장)
               </label>
               <input
@@ -546,21 +560,21 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
                 value={topic1}
                 onChange={(e) => setTopic1(e.target.value)}
                 placeholder="발제 질문 1: 책에서 가장 인상 깊었던 인물이나 사건은?"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#CCE0CD] text-xs text-[#19221C]"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
               />
               <input
                 type="text"
                 value={topic2}
                 onChange={(e) => setTopic2(e.target.value)}
                 placeholder="발제 질문 2: 나의 캘거리 일상과 연결지어 생각해볼 질문은?"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#CCE0CD] text-xs text-[#19221C]"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
               />
               <input
                 type="text"
                 value={topic3}
                 onChange={(e) => setTopic3(e.target.value)}
                 placeholder="발제 질문 3: 이 책이 나에게 남긴 질문은 무엇인가요?"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#CCE0CD] text-xs text-[#19221C]"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 focus:outline-none focus:border-[#191919] text-xs text-[#191919]"
               />
             </div>
           </div>
@@ -570,14 +584,14 @@ export const CreateClubModal: React.FC<CreateClubModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-full bg-white border border-[#DDD4C3] text-xs font-semibold text-[#19221C] cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[#FFFDF4] hover:bg-[#191919]/5 border border-[#191919]/20 text-xs font-bold text-[#191919] cursor-pointer transition-colors"
             >
               취소
             </button>
 
             <button
               type="submit"
-              className="px-7 py-3 rounded-full bg-[#DF612D] hover:bg-[#c95221] text-white text-xs sm:text-sm font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+              className="px-7 py-3 rounded-xl bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 text-xs sm:text-sm font-extrabold transition-colors cursor-pointer flex items-center gap-2"
             >
               <span>모임 등록 완료하기</span>
               <Check className="w-4 h-4" />

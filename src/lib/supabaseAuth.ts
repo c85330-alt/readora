@@ -7,6 +7,7 @@ import {
   setAuthPersistenceMode,
   supabaseConfigError,
 } from './supabase';
+import { validateBirthDateString } from '../utils/birthDate';
 
 export const AUTH_OTP_EXPIRY_SECONDS = 600; // 10 minutes (matches Supabase OTP Expiration = 600s)
 export const AUTH_OTP_RESEND_COOLDOWN_SECONDS = 60;
@@ -98,6 +99,10 @@ export function mapProfileToUser(
       typeof profile.gender === 'string' && profile.gender.trim()
         ? profile.gender
         : '기타',
+    birthDate:
+      typeof profile.birth_date === 'string' && profile.birth_date.trim()
+        ? profile.birth_date.trim().slice(0, 10)
+        : null,
     role: normalizeRole(profile.role),
     status: normalizeStatus(profile.status),
     createdAt: formatCreatedAt(profile.created_at),
@@ -387,9 +392,27 @@ export async function fetchAdminMembersOnServer(): Promise<AdminMembersResult> {
 
 export async function updateOwnSupabaseProfile(
   userId: string,
-  payload: { name: string; phone: string },
+  payload: { name: string; phone: string; birthDate?: string },
   emailFallback?: string
 ): Promise<{ success: boolean; user?: User; message?: string }> {
+  const updateBody: { name: string; phone: string; birth_date?: string } = {
+    name: payload.name.trim(),
+    phone: payload.phone.trim(),
+  };
+
+  let validatedBirthDate: string | undefined;
+  if (payload.birthDate !== undefined) {
+    const birthCheck = validateBirthDateString(payload.birthDate);
+    if (!birthCheck.valid || !birthCheck.formatted) {
+      return {
+        success: false,
+        message: birthCheck.message ?? '생년월일을 입력해 주세요.',
+      };
+    }
+    validatedBirthDate = birthCheck.formatted;
+    updateBody.birth_date = birthCheck.formatted;
+  }
+
   if (!isSupabaseConfigured) {
     return {
       success: false,
@@ -401,10 +424,7 @@ export async function updateOwnSupabaseProfile(
     const client = getSupabaseClient();
     const { data, error } = await client
       .from('profiles')
-      .update({
-        name: payload.name.trim(),
-        phone: payload.phone.trim(),
-      })
+      .update(updateBody)
       .eq('id', userId)
       .select('*')
       .single();
@@ -414,6 +434,19 @@ export async function updateOwnSupabaseProfile(
         success: false,
         message: '프로필 정보를 저장하는 중 오류가 발생했습니다.',
       };
+    }
+
+    if (validatedBirthDate) {
+      const savedBirth =
+        typeof (data as Record<string, unknown>).birth_date === 'string'
+          ? String((data as Record<string, unknown>).birth_date).trim().slice(0, 10)
+          : '';
+      if (savedBirth !== validatedBirthDate) {
+        return {
+          success: false,
+          message: '생년월일 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        };
+      }
     }
 
     return {

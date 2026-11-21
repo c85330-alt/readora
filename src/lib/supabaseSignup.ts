@@ -1,4 +1,10 @@
-import { getSupabaseClient, isSupabaseConfigured, supabaseConfigError } from './supabase';
+import {
+  clearAuthSessionStorage,
+  getSupabaseClient,
+  isSupabaseConfigured,
+  supabaseConfigError,
+} from './supabase';
+import { validateBirthDateString } from '../utils/birthDate';
 
 export const SIGNUP_OTP_EXPIRY_SECONDS = 600; // 10 minutes (matches Supabase Email OTP Expiration = 600s)
 export const SIGNUP_RESEND_COOLDOWN_SECONDS = 60; // Supabase default email resend rate limit
@@ -9,6 +15,7 @@ export interface SupabaseProfile {
   name: string;
   phone: string | null;
   gender: string | null;
+  birth_date?: string | null;
   role?: string | null;
   email?: string | null;
   created_at?: string | null;
@@ -205,7 +212,16 @@ export async function signUpWithEmailOtp(params: {
   name: string;
   phone: string;
   gender: '여성' | '남성' | '기타';
+  birthDate: string;
 }): Promise<SendSignupOtpResult> {
+  const birthValidation = validateBirthDateString(params.birthDate);
+  if (!birthValidation.valid || !birthValidation.formatted) {
+    return {
+      success: false,
+      errorMessage: birthValidation.message ?? '생년월일을 입력해 주세요.',
+    };
+  }
+
   if (!isSupabaseConfigured) {
     return {
       success: false,
@@ -224,6 +240,7 @@ export async function signUpWithEmailOtp(params: {
           name: params.name.trim(),
           phone: params.phone.trim(),
           gender: params.gender,
+          birth_date: birthValidation.formatted,
         },
       },
     });
@@ -289,14 +306,25 @@ export async function resendSignupOtp(email: string): Promise<SendSignupOtpResul
 
 export async function verifySignupOtpAndFetchProfile(
   email: string,
-  token: string
+  token: string,
+  birthDate: string
 ): Promise<VerifySignupOtpResult> {
+  const birthValidation = validateBirthDateString(birthDate);
+  if (!birthValidation.valid || !birthValidation.formatted) {
+    return {
+      success: false,
+      errorMessage: birthValidation.message ?? '생년월일을 입력해 주세요.',
+    };
+  }
+
   if (!isSupabaseConfigured) {
     return {
       success: false,
       errorMessage: supabaseConfigError ?? 'Supabase 연결 설정이 완료되지 않았습니다.',
     };
   }
+
+  const targetBirthDate = birthValidation.formatted;
 
   try {
     const client = getSupabaseClient();
@@ -339,11 +367,54 @@ export async function verifySignupOtpAndFetchProfile(
     }
 
     if (!profileData) {
+      try {
+        await client.auth.signOut({ scope: 'local' });
+      } catch {
+        // Ignore cleanup errors
+      }
+      clearAuthSessionStorage();
       return {
         success: false,
         userId,
         errorMessage: translateSupabaseSignupError(profileError, 'profile').message,
       };
+    }
+
+    // Ensure birth_date is persisted on public.profiles even if DB trigger hasn't been updated yet
+    const existingBirthDate =
+      typeof profileData.birth_date === 'string'
+        ? profileData.birth_date.trim().slice(0, 10)
+        : '';
+
+    if (existingBirthDate !== targetBirthDate) {
+      const { data: updatedProfile, error: updateBirthError } = await client
+        .from('profiles')
+        .update({ birth_date: targetBirthDate })
+        .eq('id', userId)
+        .select('*')
+        .single();
+
+      const confirmedBirthDate =
+        updatedProfile && typeof (updatedProfile as SupabaseProfile).birth_date === 'string'
+          ? (updatedProfile as SupabaseProfile).birth_date!.trim().slice(0, 10)
+          : '';
+
+      if (updateBirthError || !updatedProfile || confirmedBirthDate !== targetBirthDate) {
+        try {
+          await client.auth.signOut({ scope: 'local' });
+        } catch {
+          // Ignore cleanup errors
+        }
+        clearAuthSessionStorage();
+        return {
+          success: false,
+          userId,
+          errorMessage:
+            '생년월일 정보를 저장하지 못해 회원가입을 완료할 수 없습니다. 잠시 후 다시 시도하거나 운영팀에 문의해 주세요.',
+        };
+      }
+
+      profileData = updatedProfile as SupabaseProfile;
     }
 
     return {

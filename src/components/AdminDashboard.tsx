@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 
 import { DailyPVRecord, getRealDailyPVRecords } from '../utils/analytics';
+import { calculateAgeFromBirthDate, formatBirthDateKorean } from '../utils/birthDate';
 
 interface AdminDashboardProps {
   currentUser: User;
@@ -162,6 +163,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [clubHostFilter, setClubHostFilter] = useState<'all' | 'admin_host'>('all');
   const [selectedClubForApplicants, setSelectedClubForApplicants] = useState<BookClub | null>(null);
   const [broadcastNotice, setBroadcastNotice] = useState<string | null>(null);
+  const [confirmDeleteClubId, setConfirmDeleteClubId] = useState<string | null>(null);
 
   // Filtered Members
   const filteredUsers = users.filter((u) => {
@@ -216,27 +218,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activeRSVPs = rsvps.filter((r) => r.status === 'confirmed').length;
 
   return (
-    <div className="min-h-screen bg-[#F0EBE0] text-[#19221C] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FBF9E9] text-[#191919] flex flex-col">
       {/* Top Admin Navigation Header */}
-      <header className="bg-[#172E22] text-white sticky top-0 z-40 border-b border-[#2D4536] shadow-md">
+      <header className="bg-[#191919] text-[#FBF9E9] sticky top-0 z-40 border-b border-[#191919]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex items-baseline gap-1 shrink-0">
-              <span className="font-[Arial,sans-serif] text-xl sm:text-2xl font-bold tracking-tight text-white">
+            <div className="flex items-baseline gap-1.5 shrink-0">
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#FBF9E9]">
                 리도라
               </span>
-              <span className="text-[10px] sm:text-xs text-stone-300 font-medium hidden sm:inline">Readora</span>
+              <span className="font-display-en text-[10px] sm:text-xs text-[#FBF9E9]/60 font-bold tracking-widest uppercase hidden sm:inline">
+                READORA
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-[#234332] px-2.5 py-1 rounded-full border border-white/10 text-[11px] sm:text-xs truncate">
-              <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="font-semibold text-emerald-300 truncate">관리자 포털</span>
+            <div className="flex items-center gap-1.5 bg-[#FFE57E] px-2.5 py-1 rounded-md text-[11px] sm:text-xs text-[#191919] font-extrabold truncate">
+              <Crown className="w-3.5 h-3.5 text-[#191919] shrink-0" />
+              <span className="truncate">관리자 포털</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <button
               onClick={onOpenCreateClub}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#DF612D] hover:bg-[#c95221] text-white px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-full transition-colors cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] px-2.5 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
               title="관리자가 직접 호스트로서 새 모임을 등록합니다"
             >
               <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -246,17 +250,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {onOpenMyPage && (
               <button
                 onClick={onOpenMyPage}
-                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors cursor-pointer border border-white/15"
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
                 title="마이페이지 (개인정보 및 참여 모임 관리)"
               >
-                <Users className="w-3.5 h-3.5 text-amber-300" />
+                <Users className="w-3.5 h-3.5 text-[#FFE57E]" />
                 <span className="hidden sm:inline">마이페이지</span>
               </button>
             )}
 
             <button
               onClick={onSwitchToUserView}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold bg-white/10 hover:bg-white/20 text-white px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors cursor-pointer border border-white/15"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-white/10 hover:bg-white/20 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-white/15"
               title="사용자 화면으로 전환"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -265,7 +269,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-200 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-colors cursor-pointer border border-red-500/30"
+              className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold bg-[#F16B47]/20 hover:bg-[#F16B47]/35 text-[#FBF9E9] px-2.5 sm:px-3.5 py-2 rounded-lg transition-colors cursor-pointer border border-[#F16B47]/40"
               title="로그아웃"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -275,40 +279,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Tab Bar */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex gap-2 sm:gap-4 border-t border-[#234332] overflow-x-auto no-scrollbar whitespace-nowrap">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex gap-2 sm:gap-4 border-t border-white/15 overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveTab('clubs')}
-            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 ${
+            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 tabular-nums ${
               activeTab === 'clubs'
-                ? 'border-[#DF612D] text-white'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-[#FFE57E] text-[#FFE57E]'
+                : 'border-transparent text-[#FBF9E9]/60 hover:text-[#FBF9E9]'
             }`}
           >
-            <Crown className="w-4 h-4 text-amber-400" />
+            <Crown className="w-4 h-4" />
             <span>모임 개설 및 관리 ({clubs.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('members')}
-            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 ${
+            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 tabular-nums ${
               activeTab === 'members'
-                ? 'border-[#DF612D] text-white'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-[#FFE57E] text-[#FFE57E]'
+                : 'border-transparent text-[#FBF9E9]/60 hover:text-[#FBF9E9]'
             }`}
           >
-            <Users className="w-4 h-4 text-[#DF612D]" />
+            <Users className="w-4 h-4" />
             <span>회원 계정 관리 ({users.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 ${
+            className={`py-2.5 sm:py-3.5 px-2.5 sm:px-3 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 sm:gap-2 border-b-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'analytics'
-                ? 'border-[#DF612D] text-white'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
+                ? 'border-[#FFE57E] text-[#FFE57E]'
+                : 'border-transparent text-[#FBF9E9]/60 hover:text-[#FBF9E9]'
             }`}
           >
-            <BarChart3 className="w-4 h-4 text-emerald-400" />
+            <BarChart3 className="w-4 h-4" />
             <span>페이지뷰 분석 & 통계</span>
           </button>
         </div>
@@ -318,74 +322,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full space-y-4 sm:space-y-6">
         {/* Metric Cards Banner */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
-          <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E0D8C8] shadow-xs">
+          <div className="bg-[#FFFDF4] p-3.5 sm:p-5 rounded-2xl border border-[#191919]/15">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-stone-500">호스트 운영 모임</span>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <span className="text-[11px] sm:text-xs font-bold text-[#191919]/65">호스트 운영 모임</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#FFE57E] text-[#191919] flex items-center justify-center">
                 <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-[#19221C]">{adminClubsCount}개</div>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 sm:mt-1">관리자/호스트 클럽</p>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#191919] tabular-nums">{adminClubsCount}개</div>
+            <p className="text-[10px] sm:text-[11px] text-[#191919]/55 mt-0.5 sm:mt-1">관리자/호스트 클럽</p>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E0D8C8] shadow-xs">
+          <div className="bg-[#FFFDF4] p-3.5 sm:p-5 rounded-2xl border border-[#191919]/15">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-stone-500">전체 독서모임</span>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 text-[#2D6A4F] flex items-center justify-center">
+              <span className="text-[11px] sm:text-xs font-bold text-[#191919]/65">전체 독서모임</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#B9D8E6] text-[#191919] flex items-center justify-center">
                 <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-[#19221C]">{totalClubs}개</div>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 sm:mt-1">캘거리 전역 모임</p>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#191919] tabular-nums">{totalClubs}개</div>
+            <p className="text-[10px] sm:text-[11px] text-[#191919]/55 mt-0.5 sm:mt-1">캘거리 전역 모임</p>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E0D8C8] shadow-xs">
+          <div className="bg-[#FFFDF4] p-3.5 sm:p-5 rounded-2xl border border-[#191919]/15">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-stone-500">신청 & 결제 접수</span>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-orange-50 text-[#DF612D] flex items-center justify-center">
+              <span className="text-[11px] sm:text-xs font-bold text-[#191919]/65">신청 & 결제 접수</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#F16B47]/15 text-[#F16B47] flex items-center justify-center">
                 <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-[#19221C]">{totalRSVPs}건</div>
-            <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 sm:mt-1">확정 신청 {activeRSVPs}건</p>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#191919] tabular-nums">{totalRSVPs}건</div>
+            <p className="text-[10px] sm:text-[11px] text-[#F16B47] font-bold mt-0.5 sm:mt-1 tabular-nums">확정 신청 {activeRSVPs}건</p>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-[#E0D8C8] shadow-xs">
+          <div className="bg-[#FFFDF4] p-3.5 sm:p-5 rounded-2xl border border-[#191919]/15">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className="text-[11px] sm:text-xs font-semibold text-stone-500">가입 회원 수</span>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-50 text-[#1E4E79] flex items-center justify-center">
+              <span className="text-[11px] sm:text-xs font-bold text-[#191919]/65">가입 회원 수</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#191919] text-[#FBF9E9] flex items-center justify-center">
                 <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-[#19221C]">{totalMembers}명</div>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 sm:mt-1">이메일 인증 회원</p>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#191919] tabular-nums">{totalMembers}명</div>
+            <p className="text-[10px] sm:text-[11px] text-[#191919]/55 mt-0.5 sm:mt-1">이메일 인증 회원</p>
           </div>
 
           <div 
             onClick={() => setActiveTab('analytics')}
-            className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border shadow-xs transition-all cursor-pointer col-span-2 sm:col-span-1 ${
+            className={`p-3.5 sm:p-5 rounded-2xl border transition-all cursor-pointer col-span-2 sm:col-span-1 ${
               activeTab === 'analytics'
-                ? 'bg-[#172E22] text-white border-[#172E22]'
-                : 'bg-white border-[#E0D8C8] hover:border-[#DF612D]/40'
+                ? 'bg-[#191919] text-[#FBF9E9] border-[#191919]'
+                : 'bg-[#FFFDF4] border-[#191919]/15 hover:border-[#191919]/45'
             }`}
             title="클릭 시 페이지뷰 분석 및 트래픽 통계로 이동"
           >
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className={`text-[11px] sm:text-xs font-semibold ${activeTab === 'analytics' ? 'text-emerald-300' : 'text-stone-500'}`}>
+              <span className={`text-[11px] sm:text-xs font-bold ${activeTab === 'analytics' ? 'text-[#FFE57E]' : 'text-[#191919]/65'}`}>
                 당일 페이지뷰 (오늘)
               </span>
-              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center ${
-                activeTab === 'analytics' ? 'bg-white/10 text-emerald-400' : 'bg-purple-50 text-purple-700'
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${
+                activeTab === 'analytics' ? 'bg-[#FFE57E] text-[#191919]' : 'bg-[#FBF9E9] text-[#191919] border border-[#191919]/15'
               }`}>
                 <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className={`text-2xl font-bold ${activeTab === 'analytics' ? 'text-white' : 'text-[#19221C]'}`}>
+            <div className={`text-2xl font-extrabold tabular-nums ${activeTab === 'analytics' ? 'text-[#FBF9E9]' : 'text-[#191919]'}`}>
               {todayPVDisplay.toLocaleString()}회
             </div>
-            <p className={`text-[11px] font-semibold mt-1 flex items-center gap-1 ${
-              activeTab === 'analytics' ? 'text-emerald-300' : 'text-emerald-600'
+            <p className={`text-[11px] font-bold mt-1 flex items-center gap-1 ${
+              activeTab === 'analytics' ? 'text-[#B9D8E6]' : 'text-[#F16B47]'
             }`}>
               <TrendingUp className="w-3 h-3" />
               <span>전일 대비 +8.4% 상승</span>
@@ -397,59 +401,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'clubs' && (
           <div className="space-y-6">
             {/* Action Bar */}
-            <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-[#19221C] flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-amber-500" />
+                <h2 className="text-lg font-extrabold text-[#191919] flex items-center gap-2">
+                  <Crown className="w-5 h-5 text-[#F16B47]" />
                   <span>호스트 모임 개설 및 신청자 관리</span>
                 </h2>
-                <p className="text-xs text-stone-500 mt-0.5">
+                <p className="text-xs text-[#191919]/65 mt-0.5">
                   관리자가 직접 호스트로서 모임을 개설하고, 모임의 상태(모집중/마감임박/마감) 및 신청자 명단을 관리합니다.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 {/* Host Filter Toggle */}
-                <div className="flex items-center bg-[#F4F0E5] p-1 rounded-xl border border-stone-200 text-xs">
+                <div className="flex items-center bg-[#FBF9E9] p-1 rounded-lg border border-[#191919]/15 text-xs">
                   <button
                     onClick={() => setClubHostFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer tabular-nums ${
                       clubHostFilter === 'all'
-                        ? 'bg-white text-[#19221C] shadow-xs'
-                        : 'text-stone-500 hover:text-stone-800'
+                        ? 'bg-[#191919] text-[#FFE57E]'
+                        : 'text-[#191919]/65 hover:text-[#191919]'
                     }`}
                   >
                     전체 모임 ({clubs.length})
                   </button>
                   <button
                     onClick={() => setClubHostFilter('admin_host')}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
+                    className={`px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer flex items-center gap-1 tabular-nums ${
                       clubHostFilter === 'admin_host'
-                        ? 'bg-white text-[#DF612D] shadow-xs'
-                        : 'text-stone-500 hover:text-stone-800'
+                        ? 'bg-[#191919] text-[#FFE57E]'
+                        : 'text-[#191919]/65 hover:text-[#191919]'
                     }`}
                   >
-                    <Crown className="w-3 h-3 text-amber-500" />
+                    <Crown className="w-3 h-3 text-[#F16B47]" />
                     <span>내 호스트 모임 ({adminClubsCount})</span>
                   </button>
                 </div>
 
                 {/* Search */}
                 <div className="relative w-full sm:w-56">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-[#191919]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={clubSearch}
                     onChange={(e) => setClubSearch(e.target.value)}
                     placeholder="도서명, 모임명 검색..."
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-[#DF612D] bg-[#FCFAF6]"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#191919]/20 text-xs text-[#191919] focus:outline-none focus:border-[#191919] bg-[#FBF9E9]"
                   />
                 </div>
 
                 {/* Create Club Button */}
                 <button
                   onClick={onOpenCreateClub}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#DF612D] hover:bg-[#c95221] text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer shrink-0"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FFE57E] hover:bg-[#ffd94a] text-[#191919] border border-[#191919]/20 rounded-lg text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>호스트로서 새 모임 개설</span>
@@ -458,21 +462,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* 24-Hour Auto Cancellation Rule & System Alert Banner */}
-            <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
+            <div className="bg-[#FFE57E]/25 border border-[#191919]/20 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-[#191919] text-[#FFE57E] flex items-center justify-center shrink-0 mt-0.5">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs sm:text-sm text-stone-900">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-extrabold text-xs sm:text-sm text-[#191919]">
                       모임 24시간 전 최소 인원(4명) 자동 취소 및 환불 시스템 가동 중
                     </span>
-                    <span className="text-[10px] bg-amber-200/80 text-amber-900 font-bold px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] bg-[#191919] text-[#FFE57E] font-extrabold px-2 py-0.5 rounded-md">
                       자동 연동
                     </span>
                   </div>
-                  <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+                  <p className="text-xs text-[#191919]/75 mt-1 leading-relaxed">
                     모임 시작 <strong>24시간 전까지 최소 4명</strong>이 모집되지 않은 모임은 자동으로 취소되며, 호스트 및 신청 회원 전원에게 <strong>취소 안내 알림 및 메일이 자동 발송</strong>되고 참가비는 100% 전액 환불됩니다.
                   </p>
                 </div>
@@ -482,10 +486,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {onViewAutoCancelLogs && (
                   <button
                     onClick={onViewAutoCancelLogs}
-                    className="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#FFFDF4] hover:bg-[#FBF9E9] border border-[#191919]/20 text-[#191919] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 tabular-nums"
                     title="자동 발송된 취소 안내 메일 및 SMS 내역 확인"
                   >
-                    <Bell className="w-3.5 h-3.5 text-stone-500" />
+                    <Bell className="w-3.5 h-3.5 text-[#191919]/65" />
                     <span>취소 알림/메일 내역 ({autoCancelLogsCount}건)</span>
                   </button>
                 )}
@@ -493,17 +497,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {onTriggerAutoCancellationCheck && (
                   <button
                     onClick={onTriggerAutoCancellationCheck}
-                    className="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                    className="flex-1 md:flex-none px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     title="현재 등록된 모임 중 24시간 이내 최소 4명 미달 모임을 즉시 점검하여 자동 취소 처리합니다"
                   >
-                    <span>⚡ 24시간 자동 취소 즉시 점검</span>
+                    <span>24시간 자동 취소 즉시 점검</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Clubs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {filteredClubs.map((club) => {
                 const clubApplicants = getClubRSVPs(club.id);
                 const isManagedByAdmin = 
@@ -516,67 +520,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 return (
                   <div
                     key={club.id}
-                    className={`bg-white rounded-3xl border shadow-sm overflow-hidden flex flex-col justify-between transition-all ${
-                      isCancelled ? 'border-red-200 opacity-80' : 'border-[#E0D8C8] hover:shadow-md'
+                    className={`bg-[#FFFDF4] rounded-2xl border overflow-hidden flex flex-col justify-between transition-colors ${
+                      isCancelled ? 'border-[#F16B47]/40 opacity-85' : 'border-[#191919]/15 hover:border-[#191919]/40'
                     }`}
                   >
                     <div>
                       {/* Top Club Header - Clicking opens full club details */}
                       <div 
                         onClick={() => onSelectClubDetail(club)}
-                        className="p-5 flex gap-4 border-b border-stone-100 cursor-pointer group hover:bg-stone-50/70 transition-colors"
+                        className="p-5 flex gap-4 border-b border-[#191919]/10 cursor-pointer group hover:bg-[#FBF9E9]/70 transition-colors"
                         title="클릭하여 모임 상세 정보 보기"
                       >
                         <div className="relative shrink-0">
                           <img
                             src={club.coverImage}
                             alt={club.bookTitle}
-                            className="w-20 h-28 object-cover rounded-xl shadow-xs group-hover:scale-102 transition-transform"
+                            referrerPolicy="no-referrer"
+                            className="w-20 h-28 object-cover rounded-lg border border-[#191919]/15 group-hover:scale-102 transition-transform"
                           />
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                            <Eye className="w-5 h-5 text-white drop-shadow-md" />
+                          <div className="absolute inset-0 bg-[#191919]/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <Eye className="w-5 h-5 text-[#FFE57E]" />
                           </div>
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-100 text-stone-700">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FBF9E9] text-[#191919] border border-[#191919]/15">
                               {club.category}
                             </span>
 
                             {isManagedByAdmin ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full">
-                                <Crown className="w-3 h-3 text-amber-600" />
+                              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#191919] bg-[#FFE57E] px-2 py-0.5 rounded-md">
+                                <Crown className="w-3 h-3 text-[#191919]" />
                                 관리자 직영 호스트
                               </span>
                             ) : (
-                              <span className="text-[11px] text-stone-500 font-medium">
+                              <span className="text-[11px] text-[#191919]/65 font-semibold">
                                 호스트: {club.hostName}
                               </span>
                             )}
 
                             {isCancelled && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#F16B47]/15 text-[#F16B47]">
                                 취소된 모임
                               </span>
                             )}
                           </div>
 
-                          <h3 className="font-bold text-base text-[#19221C] truncate group-hover:text-[#DF612D] transition-colors flex items-center gap-1.5">
+                          <h3 className="font-extrabold text-base text-[#191919] truncate group-hover:text-[#F16B47] transition-colors flex items-center gap-1.5">
                             <span>{club.bookTitle}</span>
-                            <Eye className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#DF612D] shrink-0" />
+                            <Eye className="w-3.5 h-3.5 text-[#191919]/40 group-hover:text-[#F16B47] shrink-0" />
                           </h3>
-                          <p className="text-xs text-stone-500 mb-2 truncate">
+                          <p className="text-xs text-[#191919]/65 mb-2 truncate">
                             {club.title}
                           </p>
 
-                          <div className="text-[11px] text-stone-600 space-y-0.5">
+                          <div className="text-[11px] text-[#191919]/75 space-y-0.5">
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-[#DF612D]" />
-                              <span>{club.dateTime}</span>
+                              <Calendar className="w-3 h-3 text-[#F16B47]" />
+                              <span className="tabular-nums">{club.dateTime}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-stone-400" />
+                              <MapPin className="w-3 h-3 text-[#191919]/45" />
                               <span className="truncate">{club.venueName}</span>
                             </div>
                           </div>
@@ -584,20 +589,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
 
                       {/* Status Management Bar (Only 모집중/마감임박/마감/취소 - No seat numbers) */}
-                      <div className="p-4 bg-[#FCFAF6] border-b border-stone-100 flex items-center justify-between flex-wrap gap-2">
+                      <div className="p-4 bg-[#FBF9E9] border-b border-[#191919]/10 flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-stone-600">모임 상태:</span>
+                          <span className="text-xs font-bold text-[#191919]/75">모임 상태:</span>
                           <select
                             value={club.status}
                             onChange={(e) => onUpdateClubStatus(club.id, e.target.value as any)}
-                            className={`text-xs px-3 py-1.5 rounded-xl border font-bold cursor-pointer transition-colors ${
+                            className={`text-xs px-3 py-1.5 rounded-lg border font-extrabold cursor-pointer transition-colors ${
                               club.status === 'open'
-                                ? 'bg-[#E8F2E8] text-[#2D6A4F] border-[#CCE0CD]'
+                                ? 'bg-[#B9D8E6] text-[#191919] border-[#191919]/25'
                                 : club.status === 'almost_full'
-                                ? 'bg-[#FDEEE3] text-[#DF612D] border-[#F2D7C2]'
+                                ? 'bg-[#FFE57E] text-[#191919] border-[#191919]/25'
                                 : club.status === 'cancelled'
-                                ? 'bg-red-50 text-red-600 border-red-200'
-                                : 'bg-stone-100 text-stone-600 border-stone-200'
+                                ? 'bg-[#F16B47]/15 text-[#F16B47] border-[#F16B47]/35'
+                                : 'bg-[#191919] text-[#FBF9E9] border-[#191919]'
                             }`}
                           >
                             <option value="open">모집중 (Open)</option>
@@ -608,61 +613,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
 
                         {onDeleteClub && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`'${club.bookTitle}' 모임을 삭제하시겠습니까?`)) {
-                                onDeleteClub(club.id);
-                              }
-                            }}
-                            className="p-1.5 text-stone-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                            title="모임 삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          confirmDeleteClubId === club.id ? (
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onDeleteClub(club.id);
+                                  setConfirmDeleteClubId(null);
+                                }}
+                                className="px-2.5 py-1 rounded-md bg-[#F16B47] hover:bg-[#d95734] text-white text-[11px] font-extrabold cursor-pointer transition-colors"
+                              >
+                                삭제 확인
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteClubId(null)}
+                                className="px-2.5 py-1 rounded-md bg-[#FFFDF4] border border-[#191919]/20 text-[#191919] text-[11px] font-bold cursor-pointer transition-colors"
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteClubId(club.id)}
+                              className="p-1.5 text-[#191919]/45 hover:text-[#F16B47] rounded-lg hover:bg-[#F16B47]/10 transition-colors cursor-pointer"
+                              title="모임 삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )
                         )}
                       </div>
 
                       {/* Minimum 4 people progress & discussion topic disclosure badge */}
-                      <div className="px-4 py-2.5 bg-stone-50 border-b border-stone-100 flex items-center justify-between text-xs flex-wrap gap-2">
+                      <div className="px-4 py-2.5 bg-[#FFFDF4] border-b border-[#191919]/10 flex items-center justify-between text-xs flex-wrap gap-2">
                         {isCancelled ? (
                           <div className="flex flex-col gap-1">
-                            <span className="text-red-700 font-bold flex items-center gap-1">
+                            <span className="text-[#F16B47] font-extrabold flex items-center gap-1">
                               <XCircle className="w-3.5 h-3.5" />
                               취소된 모임 (전액 환불 완료)
                             </span>
                             {club.cancelReason && (
-                              <span className="text-[11px] text-red-600 font-normal">
+                              <span className="text-[11px] text-[#F16B47] font-normal">
                                 사유: {club.cancelReason}
                               </span>
                             )}
                           </div>
                         ) : club.currentSeats >= 4 ? (
-                          <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-lg">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            진행 확정 (최소 4명 충족 • 알림 발송 완료)
+                          <span className="inline-flex items-center gap-1.5 font-extrabold text-[#191919] bg-[#B9D8E6]/60 px-2.5 py-1 rounded-md">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#191919] shrink-0" />
+                            진행 확정 (최소 4명 충족 · 알림 발송 완료)
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg">
-                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 font-bold text-[#191919] bg-[#FFE57E]/60 px-2.5 py-1 rounded-md">
+                            <Clock className="w-3.5 h-3.5 text-[#191919] shrink-0" />
                             최소 4명 모집 중 (충족 시 신청자 자동 알림)
                           </span>
                         )}
 
-                        <span className="text-[11px] font-medium text-stone-500">
-                          발제 질문: {club.shareDiscussionTopics !== false ? '✅ 사전 공개됨' : '🔒 당일 현장 공개'}
+                        <span className="text-[11px] font-semibold text-[#191919]/65">
+                          발제 질문: {club.shareDiscussionTopics !== false ? '사전 공개됨' : '당일 현장 공개'}
                         </span>
                       </div>
                     </div>
 
                     {/* Bottom Action: View Detail, Edit, Cancel, and View Applicants */}
-                    <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-2 border-t border-stone-100">
-                      <div className="text-xs text-stone-600">
+                    <div className="p-4 bg-[#FFFDF4] flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs text-[#191919]/75 tabular-nums">
                         {clubApplicants.length > 0 ? (
                           <span>
-                            신청자 <strong className="text-[#DF612D] font-bold">{clubApplicants.length}명</strong> (결제 완료)
+                            신청자 <strong className="text-[#F16B47] font-extrabold">{clubApplicants.length}명</strong> (결제 완료)
                           </span>
                         ) : (
-                          <span className="text-stone-400">접수된 신청 내역 없음</span>
+                          <span className="text-[#191919]/45">접수된 신청 내역 없음</span>
                         )}
                       </div>
 
@@ -670,10 +694,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {/* Club Detail View Button */}
                         <button
                           onClick={() => onSelectClubDetail(club)}
-                          className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/10 text-[#191919] border border-[#191919]/15 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
                           title="모임 상세 내용 확인"
                         >
-                          <Eye className="w-3.5 h-3.5 text-stone-600" />
+                          <Eye className="w-3.5 h-3.5 text-[#191919]/65" />
                           <span>상세 내용</span>
                         </button>
 
@@ -681,7 +705,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {onEditClub && (
                           <button
                             onClick={() => onEditClub(club)}
-                            className="px-2.5 py-1.5 rounded-xl bg-[#DF612D]/10 hover:bg-[#DF612D]/20 text-[#DF612D] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#FFE57E]/50 hover:bg-[#FFE57E] text-[#191919] border border-[#191919]/15 text-xs font-extrabold transition-colors cursor-pointer flex items-center gap-1"
                             title="모임 내용 수정"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -693,7 +717,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {onRequestCancelClub && !isCancelled && (
                           <button
                             onClick={() => onRequestCancelClub(club)}
-                            className="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#F16B47]/15 hover:bg-[#F16B47]/25 text-[#F16B47] text-xs font-extrabold transition-colors cursor-pointer flex items-center gap-1"
                             title="모임 취소"
                           >
                             <XCircle className="w-3.5 h-3.5" />
@@ -704,9 +728,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {/* Applicants Button */}
                         <button
                           onClick={() => setSelectedClubForApplicants(club)}
-                          className="px-3 py-1.5 rounded-xl bg-[#172E22] hover:bg-[#234332] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold transition-colors cursor-pointer flex items-center gap-1 tabular-nums"
                         >
-                          <Users className="w-3.5 h-3.5 text-emerald-400" />
+                          <Users className="w-3.5 h-3.5 text-[#FFE57E]" />
                           <span>신청자 ({clubApplicants.length})</span>
                         </button>
                       </div>
@@ -720,24 +744,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* TAB 2: MEMBERS MANAGEMENT (No calgaryYears, No status management) */}
         {activeTab === 'members' && (
-          <div className="bg-white rounded-3xl border border-[#E0D8C8] shadow-sm overflow-hidden">
+          <div className="bg-[#FFFDF4] rounded-2xl border border-[#191919]/15 overflow-hidden">
             {/* Search and Action Bar */}
-            <div className="p-6 border-b border-stone-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="p-5 sm:p-6 border-b border-[#191919]/15 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-[#19221C]">회원 계정 및 참여 내역</h2>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  회원 이름, 아이디, 연락처, 가입 일자 및 과거 참여한 모임 목록을 실시간으로 확인합니다.
+                <h2 className="text-lg font-extrabold text-[#191919]">회원 계정 및 참여 내역</h2>
+                <p className="text-xs text-[#191919]/65 mt-0.5">
+                  회원 이름, 아이디, 성별, 연령, 연락처, 가입 일자 및 과거 참여한 모임 목록을 실시간으로 확인합니다.
                 </p>
               </div>
 
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#191919]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
                   placeholder="이름, 아이디, 이메일 검색..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-[#DF612D] bg-[#FCFAF6]"
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#191919]/20 text-xs text-[#191919] focus:outline-none focus:border-[#191919] bg-[#FBF9E9]"
                 />
               </div>
             </div>
@@ -746,84 +770,103 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#F8F5EE] border-b border-stone-200 text-stone-600 font-semibold">
+                  <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold">
                     <th className="py-3.5 px-6">회원 정보 (이름/ID)</th>
                     <th className="py-3.5 px-6 text-center">성별</th>
+                    <th className="py-3.5 px-6 text-center">연령</th>
                     <th className="py-3.5 px-6">이메일 & 연락처</th>
                     <th className="py-3.5 px-6">가입 일자</th>
                     <th className="py-3.5 px-6">참여 모임 수</th>
                     <th className="py-3.5 px-6 text-right">상세 참여 내역</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-[#191919]/10">
                   {filteredUsers.map((user) => {
                     const userRSVPs = getMemberRSVPs(user);
                     const isAdmin = user.role === 'admin';
+                    const age = calculateAgeFromBirthDate(user.birthDate);
 
                     return (
-                      <tr key={user.id} className="hover:bg-stone-50/80 transition-colors">
+                      <tr key={user.id} className="hover:bg-[#FBF9E9]/60 transition-colors">
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full overflow-hidden bg-stone-200 shrink-0 border border-stone-300">
+                            <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#FBF9E9] shrink-0 border border-[#191919]/20">
                               {user.avatar ? (
-                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                <img src={user.avatar} alt={user.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-stone-500 font-bold">
+                                <div className="w-full h-full flex items-center justify-center text-[#191919] font-extrabold">
                                   {user.name.charAt(0)}
                                 </div>
                               )}
                             </div>
                             <div>
-                              <div className="font-bold text-[#19221C] flex items-center gap-1.5">
+                              <div className="font-extrabold text-[#191919] flex items-center gap-1.5">
                                 <span>{user.name}</span>
                                 {isAdmin && (
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#172E22] text-white">
+                                  <span className="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-[#191919] text-[#FFE57E]">
                                     ADMIN
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-stone-500 font-mono">@{user.username}</div>
+                              <div className="text-[11px] text-[#191919]/55 font-mono">@{user.username}</div>
                             </div>
                           </div>
                         </td>
 
                         <td className="py-4 px-6 text-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
                             user.gender === '여성'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-[#FFE57E]/45 text-[#191919] border-[#191919]/20'
                               : user.gender === '남성'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                              ? 'bg-[#B9D8E6]/45 text-[#191919] border-[#191919]/20'
+                              : 'bg-[#FBF9E9] text-[#191919]/60 border-[#191919]/15'
                           }`}>
                             {user.gender || '미입력'}
                           </span>
                         </td>
 
+                        <td className="py-4 px-6 text-center">
+                          {age !== null ? (
+                            <div className="inline-flex flex-col items-center">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#FBF9E9] text-[#191919] border border-[#191919]/20 tabular-nums">
+                                만 {age}세
+                              </span>
+                              <span className="text-[10px] text-[#191919]/50 mt-0.5 tabular-nums">
+                                {user.birthDate}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#FBF9E9] text-[#191919]/50 border border-[#191919]/15">
+                              미입력
+                            </span>
+                          )}
+                        </td>
+
                         <td className="py-4 px-6">
-                          <div className="text-stone-700 font-mono text-[11px] flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-stone-400" />
+                          <div className="text-[#191919] font-mono text-[11px] flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-[#191919]/45" />
                             <span>{user.email}</span>
                           </div>
                           {user.phone && user.phone !== '미등록' && (
-                            <div className="text-stone-500 text-[11px] font-mono mt-0.5 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-stone-400" />
+                            <div className="text-[#191919]/65 text-[11px] font-mono mt-0.5 flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-[#191919]/45" />
                               <span>{user.phone}</span>
                             </div>
                           )}
                         </td>
 
                         <td className="py-4 px-6">
-                          <div className="text-stone-700 font-medium flex items-center gap-1 text-[11px]">
-                            <CalendarDays className="w-3 h-3 text-stone-400" />
+                          <div className="text-[#191919]/75 font-medium flex items-center gap-1 text-[11px] tabular-nums">
+                            <CalendarDays className="w-3 h-3 text-[#191919]/45" />
                             <span>{user.createdAt}</span>
                           </div>
                         </td>
 
                         <td className="py-4 px-6">
-                          <span className={`px-2.5 py-1 rounded-full font-bold text-[11px] ${
+                          <span className={`px-2.5 py-1 rounded-md font-extrabold text-[11px] tabular-nums ${
                             userRSVPs.length > 0 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                              : 'bg-stone-100 text-stone-500'
+                              ? 'bg-[#B9D8E6] text-[#191919]' 
+                              : 'bg-[#FBF9E9] text-[#191919]/50 border border-[#191919]/15'
                           }`}>
                             {userRSVPs.length}개 모임 참여
                           </span>
@@ -832,7 +875,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <td className="py-4 px-6 text-right">
                           <button
                             onClick={() => setSelectedMemberForDetail(user)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#DF612D]/10 hover:bg-[#DF612D]/20 text-[#DF612D] font-bold text-xs transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FFE57E]/50 hover:bg-[#FFE57E] text-[#191919] border border-[#191919]/15 font-extrabold text-xs transition-colors cursor-pointer tabular-nums"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>참여 내역 ({userRSVPs.length})</span>
@@ -851,35 +894,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             {/* Action Bar with Period Switcher */}
-            <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-[#19221C] flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-lg font-extrabold text-[#191919] flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-[#F16B47]" />
                   <span>페이지뷰(PV) 분석 및 트래픽 현황</span>
                 </h2>
-                <p className="text-xs text-stone-500 mt-0.5">
+                <p className="text-xs text-[#191919]/65 mt-0.5">
                   당일(오늘), 일간, 월간 누적 및 일평균 페이지뷰와 방문자 행동 흐름을 실시간으로 확인합니다.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <div className="flex items-center bg-[#F4F0E5] p-1 rounded-xl border border-stone-200 text-xs">
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <div className="flex items-center bg-[#FBF9E9] p-1 rounded-lg border border-[#191919]/15 text-xs">
                   <button
                     onClick={() => setAnalyticsPeriod('daily')}
-                    className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer ${
                       analyticsPeriod === 'daily'
-                        ? 'bg-white text-[#19221C] shadow-xs'
-                        : 'text-stone-500 hover:text-stone-800'
+                        ? 'bg-[#191919] text-[#FFE57E]'
+                        : 'text-[#191919]/65 hover:text-[#191919]'
                     }`}
                   >
                     일간 통계 (Daily)
                   </button>
                   <button
                     onClick={() => setAnalyticsPeriod('monthly')}
-                    className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md font-extrabold transition-colors cursor-pointer ${
                       analyticsPeriod === 'monthly'
-                        ? 'bg-white text-[#19221C] shadow-xs'
-                        : 'text-stone-500 hover:text-stone-800'
+                        ? 'bg-[#191919] text-[#FFE57E]'
+                        : 'text-[#191919]/65 hover:text-[#191919]'
                     }`}
                   >
                     월간 통계 (Monthly)
@@ -888,7 +931,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <button
                   onClick={handleRefreshAnalytics}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FBF9E9] hover:bg-[#191919]/10 text-[#191919] border border-[#191919]/20 text-xs font-bold transition-colors cursor-pointer"
                   title="실시간 페이지뷰 갱신"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -900,110 +943,110 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* 4 Core Pageview Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Metric 1: 당일 페이지뷰 */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-xs relative overflow-hidden">
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">당일 페이지뷰 (오늘)</span>
-                  <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                  <span className="text-xs font-extrabold text-[#191919]/65 uppercase tracking-wider">당일 페이지뷰 (오늘)</span>
+                  <div className="w-9 h-9 rounded-lg bg-[#FFE57E] text-[#191919] flex items-center justify-center font-bold">
                     <Eye className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-extrabold text-[#19221C]">
-                  {todayPVDisplay.toLocaleString()} <span className="text-base font-semibold text-stone-500">회</span>
+                <div className="text-3xl font-extrabold text-[#191919] tabular-nums">
+                  {todayPVDisplay.toLocaleString()} <span className="text-base font-semibold text-[#191919]/60">회</span>
                 </div>
-                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">오늘 순방문자(UV)</span>
-                  <span className="font-bold text-[#19221C]">{todayRecord.uv.toLocaleString()}명</span>
+                <div className="mt-3 pt-3 border-t border-[#191919]/10 flex items-center justify-between text-xs">
+                  <span className="text-[#191919]/60">오늘 순방문자(UV)</span>
+                  <span className="font-extrabold text-[#191919] tabular-nums">{todayRecord.uv.toLocaleString()}명</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">모임 상세 조회</span>
-                  <span className="text-stone-700 font-bold">
+                  <span className="text-[#191919]/60">모임 상세 조회</span>
+                  <span className="text-[#191919] font-extrabold tabular-nums">
                     {todayRecord.detailViews.toLocaleString()}회
                   </span>
                 </div>
               </div>
 
               {/* Metric 2: 선택 기간 총 페이지뷰 */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-xs relative overflow-hidden">
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">조회 기간 총 페이지뷰</span>
-                  <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-[#2D6A4F] flex items-center justify-center font-bold">
+                  <span className="text-xs font-extrabold text-[#191919]/65 uppercase tracking-wider">조회 기간 총 페이지뷰</span>
+                  <div className="w-9 h-9 rounded-lg bg-[#B9D8E6] text-[#191919] flex items-center justify-center font-bold">
                     <BarChart3 className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-extrabold text-[#19221C]">
-                  {totalFilteredPV.toLocaleString()} <span className="text-base font-semibold text-stone-500">회</span>
+                <div className="text-3xl font-extrabold text-[#191919] tabular-nums">
+                  {totalFilteredPV.toLocaleString()} <span className="text-base font-semibold text-[#191919]/60">회</span>
                 </div>
-                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">조회 일수</span>
-                  <span className="font-bold text-stone-800">{displayRecords.length}일간 집계</span>
+                <div className="mt-3 pt-3 border-t border-[#191919]/10 flex items-center justify-between text-xs">
+                  <span className="text-[#191919]/60">조회 일수</span>
+                  <span className="font-extrabold text-[#191919] tabular-nums">{displayRecords.length}일간 집계</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">기간 최고 일간 PV</span>
-                  <span className="font-bold text-[#DF612D]">{maxFilteredPV.toLocaleString()}회</span>
+                  <span className="text-[#191919]/60">기간 최고 일간 PV</span>
+                  <span className="font-extrabold text-[#F16B47] tabular-nums">{maxFilteredPV.toLocaleString()}회</span>
                 </div>
               </div>
 
               {/* Metric 3: 조회 기간 일평균 페이지뷰 */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-xs relative overflow-hidden">
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">일평균 페이지뷰 (평균 PV)</span>
-                  <div className="w-9 h-9 rounded-2xl bg-blue-50 text-[#1E4E79] flex items-center justify-center font-bold">
+                  <span className="text-xs font-extrabold text-[#191919]/65 uppercase tracking-wider">일평균 페이지뷰 (평균 PV)</span>
+                  <div className="w-9 h-9 rounded-lg bg-[#191919] text-[#FBF9E9] flex items-center justify-center font-bold">
                     <Activity className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-extrabold text-[#19221C]">
-                  {avgFilteredPV.toLocaleString()} <span className="text-base font-semibold text-stone-500">회/일</span>
+                <div className="text-3xl font-extrabold text-[#191919] tabular-nums">
+                  {avgFilteredPV.toLocaleString()} <span className="text-base font-semibold text-[#191919]/60">회/일</span>
                 </div>
-                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">세션당 페이지수 (PPS)</span>
-                  <span className="font-bold text-[#DF612D]">{todayRecord.pps} 페이지</span>
+                <div className="mt-3 pt-3 border-t border-[#191919]/10 flex items-center justify-between text-xs">
+                  <span className="text-[#191919]/60">세션당 페이지수 (PPS)</span>
+                  <span className="font-extrabold text-[#F16B47] tabular-nums">{todayRecord.pps} 페이지</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">모임 상세 총 조회</span>
-                  <span className="font-bold text-[#19221C]">{totalDetailViews.toLocaleString()}회</span>
+                  <span className="text-[#191919]/60">모임 상세 총 조회</span>
+                  <span className="font-extrabold text-[#191919] tabular-nums">{totalDetailViews.toLocaleString()}회</span>
                 </div>
               </div>
 
               {/* Metric 4: 월간 누적 페이지뷰 */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-xs relative overflow-hidden">
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">월간 페이지뷰 (이번 달 누적)</span>
-                  <div className="w-9 h-9 rounded-2xl bg-orange-50 text-[#DF612D] flex items-center justify-center font-bold">
+                  <span className="text-xs font-extrabold text-[#191919]/65 uppercase tracking-wider">월간 페이지뷰 (이번 달 누적)</span>
+                  <div className="w-9 h-9 rounded-lg bg-[#F16B47]/15 text-[#F16B47] flex items-center justify-center font-bold">
                     <Calendar className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-extrabold text-[#19221C]">
-                  {currentMonthPV.toLocaleString()} <span className="text-base font-semibold text-stone-500">회</span>
+                <div className="text-3xl font-extrabold text-[#191919] tabular-nums">
+                  {currentMonthPV.toLocaleString()} <span className="text-base font-semibold text-[#191919]/60">회</span>
                 </div>
-                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">월간 누적 순방문자</span>
-                  <span className="font-bold text-[#19221C]">{currentMonthUV.toLocaleString()}명</span>
+                <div className="mt-3 pt-3 border-t border-[#191919]/10 flex items-center justify-between text-xs">
+                  <span className="text-[#191919]/60">월간 누적 순방문자</span>
+                  <span className="font-extrabold text-[#191919] tabular-nums">{currentMonthUV.toLocaleString()}명</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-stone-500">실시간 데이터 수집</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 정상 가동 중
+                  <span className="text-[#191919]/60">실시간 데이터 수집</span>
+                  <span className="text-[#191919] font-extrabold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#F16B47]" /> 정상 가동 중
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Date Range Selector */}
-            <div className="bg-[#FAF7F0] p-6 rounded-3xl border border-[#E2D8C3] shadow-xs space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#EAE1D1] pb-4">
+            <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#191919]/10 pb-4">
                 <div>
-                  <h3 className="font-bold text-base text-[#19221C] flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-[#2D6A4F]" />
+                  <h3 className="font-extrabold text-base text-[#191919] flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-[#F16B47]" />
                     <span>페이지뷰 조회 기간 선택</span>
                   </h3>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="text-xs text-[#191919]/65 mt-0.5">
                     원하는 조회 기간을 선택하면 하단의 선 그래프와 상세 통계 테이블이 실시간으로 집계됩니다.
                   </p>
                 </div>
 
                 {/* Quick Presets */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs text-stone-500 font-medium mr-1">빠른 선택:</span>
+                  <span className="text-xs text-[#191919]/60 font-bold mr-1">빠른 선택:</span>
                   {[
                     { label: '최근 7일', days: 7 },
                     { label: '최근 14일', days: 14 },
@@ -1030,10 +1073,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           setChartStartDate(range.start);
                           setChartEndDate(range.end);
                         }}
-                        className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
+                        className={`text-xs px-3 py-1.5 rounded-lg font-extrabold transition-all cursor-pointer ${
                           isActive
-                            ? 'bg-[#172E22] text-white shadow-xs'
-                            : 'bg-white border border-[#E0D8C8] text-stone-700 hover:bg-[#F3EFE6]'
+                            ? 'bg-[#191919] text-[#FFE57E]'
+                            : 'bg-[#FBF9E9] border border-[#191919]/15 text-[#191919]/75 hover:border-[#191919]/45'
                         }`}
                       >
                         {preset.label}
@@ -1047,66 +1090,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="w-full sm:w-44">
-                    <label className="block text-[11px] text-stone-500 mb-1">시작일</label>
+                    <label className="block text-[11px] font-bold text-[#191919]/65 mb-1">시작일</label>
                     <input
                       type="date"
                       value={chartStartDate}
                       onChange={(e) => setChartStartDate(e.target.value)}
-                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-stone-200 bg-white focus:outline-none focus:border-[#2D6A4F]"
+                      className="w-full text-xs font-bold px-3 py-2 rounded-lg border border-[#191919]/20 bg-[#FBF9E9] text-[#191919] focus:outline-none focus:border-[#191919]"
                     />
                   </div>
-                  <span className="text-stone-400 font-bold self-end pb-2">~</span>
+                  <span className="text-[#191919]/45 font-extrabold self-end pb-2">~</span>
                   <div className="w-full sm:w-44">
-                    <label className="block text-[11px] text-stone-500 mb-1">종료일</label>
+                    <label className="block text-[11px] font-bold text-[#191919]/65 mb-1">종료일</label>
                     <input
                       type="date"
                       value={chartEndDate}
                       onChange={(e) => setChartEndDate(e.target.value)}
-                      className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-stone-200 bg-white focus:outline-none focus:border-[#2D6A4F]"
+                      className="w-full text-xs font-bold px-3 py-2 rounded-lg border border-[#191919]/20 bg-[#FBF9E9] text-[#191919] focus:outline-none focus:border-[#191919]"
                     />
                   </div>
                 </div>
 
-                <div className="w-full sm:w-auto flex flex-wrap items-center gap-3 text-xs bg-white px-4 py-2.5 rounded-2xl border border-[#E0D8C8]">
-                  <span className="text-stone-500">
-                    조회 기간: <strong className="text-stone-800">{displayRecords.length}일간</strong>
+                <div className="w-full sm:w-auto flex flex-wrap items-center gap-3 text-xs bg-[#FBF9E9] px-4 py-2.5 rounded-xl border border-[#191919]/15 tabular-nums">
+                  <span className="text-[#191919]/65">
+                    조회 기간: <strong className="text-[#191919]">{displayRecords.length}일간</strong>
                   </span>
-                  <span className="text-stone-300">|</span>
-                  <span className="text-stone-500">
-                    기간 합계: <strong className="text-[#19221C]">{totalFilteredPV.toLocaleString()} PV</strong>
+                  <span className="text-[#191919]/25">|</span>
+                  <span className="text-[#191919]/65">
+                    기간 합계: <strong className="text-[#191919]">{totalFilteredPV.toLocaleString()} PV</strong>
                   </span>
-                  <span className="text-stone-300">|</span>
-                  <span className="text-stone-500">
-                    일평균: <strong className="text-[#DF612D]">{avgFilteredPV.toLocaleString()} PV/일</strong>
+                  <span className="text-[#191919]/25">|</span>
+                  <span className="text-[#191919]/65">
+                    일평균: <strong className="text-[#F16B47]">{avgFilteredPV.toLocaleString()} PV/일</strong>
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Daily Trend Chart (선 그래프: SVG Line Chart) */}
-            <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-stone-100 pb-4">
+            <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#191919]/10 pb-4">
                 <div>
-                  <h3 className="font-bold text-base text-[#19221C] flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#DF612D]" />
+                  <h3 className="font-extrabold text-base text-[#191919] flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-[#F16B47]" />
                     <span>페이지뷰 추이 선 그래프 (Line Chart)</span>
                   </h3>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="text-xs text-[#191919]/65 mt-0.5">
                     선택 기간({chartStartDate} ~ {chartEndDate}) 동안의 일간 페이지뷰 추이를 곡선 그래프로 제공합니다. 데이터 포인트에 마우스를 올리면 상세 정보를 확인할 수 있습니다.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-stone-600">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-[#191919]/75 font-semibold">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-3 h-0.5 bg-[#DF612D] inline-block" /> 일간 PV 추이선
+                    <span className="w-3 h-0.5 bg-[#F16B47] inline-block" /> 일간 PV 추이선
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#172E22]" /> 평일
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#191919]" /> 평일
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#DF612D]" /> 주말
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#F16B47]" /> 주말
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-purple-600 ring-2 ring-purple-200" /> 오늘 (당일)
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FFE57E] border border-[#191919]" /> 오늘 (당일)
                   </span>
                 </div>
               </div>
@@ -1170,9 +1213,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         >
                           <defs>
                             <linearGradient id="pvLineGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#DF612D" stopOpacity="0.28" />
-                              <stop offset="60%" stopColor="#DF612D" stopOpacity="0.08" />
-                              <stop offset="100%" stopColor="#DF612D" stopOpacity="0.0" />
+                              <stop offset="0%" stopColor="#F16B47" stopOpacity="0.28" />
+                              <stop offset="60%" stopColor="#F16B47" stopOpacity="0.08" />
+                              <stop offset="100%" stopColor="#F16B47" stopOpacity="0.0" />
                             </linearGradient>
                             <filter id="shadowFilter" x="-10%" y="-10%" width="120%" height="120%">
                               <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.15" />
@@ -1190,7 +1233,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   y1={y}
                                   x2={padL + plotW}
                                   y2={y}
-                                  stroke="#E8E2D5"
+                                  stroke="rgba(25, 25, 25, 0.12)"
                                   strokeDasharray="4 4"
                                   strokeWidth="1"
                                 />
@@ -1199,8 +1242,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   y={y + 4}
                                   textAnchor="end"
                                   fontSize="10"
-                                  fontWeight="600"
-                                  fill="#8C827A"
+                                  fontWeight="700"
+                                  fill="rgba(25, 25, 25, 0.55)"
                                 >
                                   {val.toLocaleString()}
                                 </text>
@@ -1218,7 +1261,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <path
                               d={linePath}
                               fill="none"
-                              stroke="#DF612D"
+                              stroke="#F16B47"
                               strokeWidth="3.2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -1229,10 +1272,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {points.map((pt) => {
                             const isHovered = hoveredPointIndex === pt.index;
                             const dotColor = pt.isToday
-                              ? '#9333EA'
+                              ? '#FFE57E'
                               : pt.isWeekend
-                              ? '#DF612D'
-                              : '#172E22';
+                              ? '#F16B47'
+                              : '#191919';
 
                             return (
                               <g key={pt.date} className="cursor-pointer">
@@ -1254,7 +1297,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     y1={padT}
                                     x2={pt.x}
                                     y2={padT + plotH}
-                                    stroke="#9333EA"
+                                    stroke="#191919"
                                     strokeWidth="1.5"
                                     strokeDasharray="2 2"
                                   />
@@ -1266,7 +1309,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   cy={pt.y}
                                   r={isHovered ? 7 : 5}
                                   fill={dotColor}
-                                  stroke="#FFFFFF"
+                                  stroke={pt.isToday ? '#191919' : '#FFFDF4'}
                                   strokeWidth="2.5"
                                   filter="url(#shadowFilter)"
                                   className="transition-all duration-150"
@@ -1279,8 +1322,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   y={pt.y - 10}
                                   textAnchor="middle"
                                   fontSize="10"
-                                  fontWeight={isHovered || pt.isToday ? '800' : '600'}
-                                  fill={pt.isToday ? '#7E22CE' : '#19221C'}
+                                  fontWeight={isHovered || pt.isToday ? '800' : '700'}
+                                  fill={pt.isToday ? '#F16B47' : '#191919'}
                                 >
                                   {pt.effectivePV.toLocaleString()}
                                 </text>
@@ -1291,13 +1334,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   y={padT + plotH + 20}
                                   textAnchor="middle"
                                   fontSize="10"
-                                  fontWeight={pt.isToday ? '700' : '500'}
+                                  fontWeight={pt.isToday ? '800' : '600'}
                                   fill={
                                     pt.isToday
-                                      ? '#7E22CE'
+                                      ? '#191919'
                                       : pt.isWeekend
-                                      ? '#C85524'
-                                      : '#6B7280'
+                                      ? '#F16B47'
+                                      : 'rgba(25, 25, 25, 0.55)'
                                   }
                                 >
                                   {pt.dateLabel}
@@ -1312,30 +1355,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     {/* Active Hover Tooltip Box */}
                     {hoveredPointIndex !== null && points[hoveredPointIndex] && (
-                      <div className="mt-2 p-3 bg-[#FAF7F0] border border-[#E4DCcc] rounded-2xl flex flex-wrap items-center justify-between text-xs gap-3">
+                      <div className="mt-2 p-3.5 bg-[#FBF9E9] border border-[#191919]/20 rounded-xl flex flex-wrap items-center justify-between text-xs gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-[#DF612D]" />
-                          <span className="font-bold text-[#19221C]">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#F16B47]" />
+                          <span className="font-extrabold text-[#191919]">
                             {points[hoveredPointIndex].fullDate}
                           </span>
                           {points[hoveredPointIndex].isToday && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#FFE57E] text-[#191919] font-extrabold">
                               오늘 당일
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-stone-700">
+                        <div className="flex flex-wrap items-center gap-4 text-[#191919]/75 tabular-nums">
                           <span>
-                            페이지뷰: <strong className="text-[#DF612D] font-extrabold">{points[hoveredPointIndex].effectivePV.toLocaleString()}회</strong>
+                            페이지뷰: <strong className="text-[#F16B47] font-extrabold">{points[hoveredPointIndex].effectivePV.toLocaleString()}회</strong>
                           </span>
                           <span>
-                            순방문자: <strong className="text-stone-900 font-bold">{points[hoveredPointIndex].uv.toLocaleString()}명</strong>
+                            순방문자: <strong className="text-[#191919] font-extrabold">{points[hoveredPointIndex].uv.toLocaleString()}명</strong>
                           </span>
                           <span>
-                            모임조회: <strong className="text-stone-900 font-bold">{points[hoveredPointIndex].detailViews.toLocaleString()}회</strong>
+                            모임조회: <strong className="text-[#191919] font-extrabold">{points[hoveredPointIndex].detailViews.toLocaleString()}회</strong>
                           </span>
                           <span>
-                            세션당 PV: <strong className="text-stone-900 font-bold">{points[hoveredPointIndex].pps}페이지</strong>
+                            세션당 PV: <strong className="text-[#191919] font-extrabold">{points[hoveredPointIndex].pps}페이지</strong>
                           </span>
                         </div>
                       </div>
@@ -1346,20 +1389,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Detailed Table (Daily or Monthly) */}
-            <div className="bg-white rounded-3xl border border-[#E0D8C8] shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="bg-[#FFFDF4] rounded-2xl border border-[#191919]/15 overflow-hidden">
+              <div className="p-5 sm:p-6 border-b border-[#191919]/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="font-bold text-base text-[#19221C]">
+                  <h3 className="font-extrabold text-base text-[#191919]">
                     {analyticsPeriod === 'daily' ? '일자별 일간 페이지뷰 상세 내역' : '월별 페이지뷰 및 방문 집계'}
                   </h3>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="text-xs text-[#191919]/65 mt-0.5">
                     {analyticsPeriod === 'daily'
                       ? `선택 기간(${chartStartDate} ~ ${chartEndDate}, 총 ${displayRecords.length}일)의 페이지뷰 및 방문자 데이터입니다.`
                       : '월별 누적 페이지뷰 및 순방문자 데이터 집계'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-3 py-1 rounded-full bg-[#F4F0E5] font-semibold text-stone-700">
+                  <span className="text-xs px-3 py-1 rounded-md bg-[#FBF9E9] border border-[#191919]/15 font-bold text-[#191919] tabular-nums">
                     {analyticsPeriod === 'daily' ? `${displayRecords.length}일 데이터` : `${monthlyStats.length}개 월 집계`}
                   </span>
                 </div>
@@ -1368,7 +1411,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#F8F5EE] border-b border-stone-200 text-stone-600 font-semibold">
+                    <tr className="bg-[#FBF9E9] border-b border-[#191919]/15 text-[#191919]/75 font-extrabold">
                       <th className="py-3.5 px-6">{analyticsPeriod === 'daily' ? '날짜 / 요일' : '연도 / 월'}</th>
                       <th className="py-3.5 px-6">페이지뷰 (PV)</th>
                       <th className="py-3.5 px-6">순방문자 (UV)</th>
@@ -1377,7 +1420,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <th className="py-3.5 px-6 text-right">구분</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-[#191919]/10">
                     {analyticsPeriod === 'daily' ? (
                       [...displayRecords]
                         .reverse()
@@ -1387,45 +1430,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           return (
                             <tr
                               key={row.date}
-                              className={`hover:bg-stone-50/80 transition-colors ${
-                                row.isToday ? 'bg-purple-50/40 font-semibold' : ''
+                              className={`hover:bg-[#FBF9E9]/60 transition-colors ${
+                                row.isToday ? 'bg-[#FFE57E]/25 font-semibold' : ''
                               }`}
                             >
                               <td className="py-4 px-6 flex items-center gap-2">
                                 {row.isToday && (
-                                  <span className="w-2 h-2 rounded-full bg-purple-600 shrink-0" />
+                                  <span className="w-2 h-2 rounded-full bg-[#F16B47] shrink-0" />
                                 )}
-                                <span className={row.isToday ? 'text-purple-900 font-bold' : 'text-stone-800'}>
+                                <span className={row.isToday ? 'text-[#191919] font-extrabold' : 'text-[#191919]'}>
                                   {row.fullDate}
                                 </span>
                                 {row.isToday && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 font-bold">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#FFE57E] text-[#191919] font-extrabold">
                                     오늘
                                   </span>
                                 )}
                                 {row.isWeekend && !row.isToday && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700 font-bold">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#F16B47]/15 text-[#F16B47] font-extrabold">
                                     주말
                                   </span>
                                 )}
                               </td>
-                              <td className="py-4 px-6 font-bold text-[#19221C]">
+                              <td className="py-4 px-6 font-extrabold text-[#191919] tabular-nums">
                                 {effectivePV.toLocaleString()}회
                               </td>
-                              <td className="py-4 px-6 text-stone-600">{row.uv.toLocaleString()}명</td>
-                              <td className="py-4 px-6 text-stone-600">{row.detailViews.toLocaleString()}회</td>
-                              <td className="py-4 px-6 text-stone-600">{row.pps}페이지</td>
+                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
+                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
+                              <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
                               <td className="py-4 px-6 text-right">
                                 {row.isToday ? (
-                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-lg font-bold bg-purple-100 text-purple-700">
+                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-md font-extrabold bg-[#FFE57E] text-[#191919]">
                                     당일 실시간
                                   </span>
                                 ) : row.isWeekend ? (
-                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-lg font-bold bg-orange-100 text-[#DF612D]">
+                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-md font-extrabold bg-[#F16B47]/15 text-[#F16B47]">
                                     주말 피크
                                   </span>
                                 ) : (
-                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-lg font-semibold bg-stone-100 text-stone-600">
+                                  <span className="inline-block text-[11px] px-2.5 py-1 rounded-md font-bold bg-[#FBF9E9] text-[#191919]/70 border border-[#191919]/15">
                                     평일
                                   </span>
                                 )}
@@ -1435,15 +1478,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         })
                     ) : (
                       monthlyStats.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-stone-50/80 transition-colors">
-                          <td className="py-4 px-6 font-bold text-[#19221C]">{row.date}</td>
-                          <td className="py-4 px-6 font-bold text-[#19221C]">{row.pv.toLocaleString()}회</td>
-                          <td className="py-4 px-6 text-stone-600">{row.uv.toLocaleString()}명</td>
-                          <td className="py-4 px-6 text-stone-600">{row.detailViews.toLocaleString()}회</td>
-                          <td className="py-4 px-6 text-stone-600">{row.pps}페이지</td>
+                        <tr key={idx} className="hover:bg-[#FBF9E9]/60 transition-colors">
+                          <td className="py-4 px-6 font-extrabold text-[#191919]">{row.date}</td>
+                          <td className="py-4 px-6 font-extrabold text-[#191919] tabular-nums">{row.pv.toLocaleString()}회</td>
+                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.uv.toLocaleString()}명</td>
+                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.detailViews.toLocaleString()}회</td>
+                          <td className="py-4 px-6 text-[#191919]/75 tabular-nums">{row.pps}페이지</td>
                           <td className="py-4 px-6 text-right">
-                            <span className="inline-flex items-center gap-0.5 font-bold text-emerald-600">
-                              <CheckCircle2 className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 font-extrabold text-[#191919]">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#F16B47]" />
                               {row.growth}
                             </span>
                           </td>
@@ -1458,13 +1501,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Bottom 2 Insight Cards: Page Breakdown & Peak Traffic */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Popular Pages Breakdown */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h3 className="font-bold text-sm text-[#19221C] flex items-center gap-2">
-                    <PieChart className="w-4 h-4 text-[#2D6A4F]" />
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 space-y-4">
+                <div className="flex items-center justify-between border-b border-[#191919]/10 pb-3">
+                  <h3 className="font-extrabold text-sm text-[#191919] flex items-center gap-2">
+                    <PieChart className="w-4 h-4 text-[#F16B47]" />
                     <span>주요 페이지별 PV 점유율</span>
                   </h3>
-                  <span className="text-xs text-stone-500">실시간 데이터</span>
+                  <span className="text-xs font-semibold text-[#191919]/55">실시간 데이터</span>
                 </div>
 
                 <div className="space-y-3 text-xs">
@@ -1475,18 +1518,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     const homeShare = Math.round((homePV / totalPV) * 100);
                     const detailShare = 100 - homeShare;
                     const breakdown = [
-                      { name: '홈 및 모임 둘러보기 (Explore & Home)', share: homeShare, pv: homePV, color: 'bg-[#172E22]' },
-                      { name: '모임 상세 및 도서 정보 (Club Detail)', share: detailShare, pv: detailPV, color: 'bg-[#DF612D]' }
+                      { name: '홈 및 모임 둘러보기 (Explore & Home)', share: homeShare, pv: homePV, color: 'bg-[#191919]' },
+                      { name: '모임 상세 및 도서 정보 (Club Detail)', share: detailShare, pv: detailPV, color: 'bg-[#F16B47]' }
                     ];
 
                     return breakdown.map((p, i) => (
-                      <div key={i} className="space-y-1">
-                        <div className="flex justify-between font-medium">
-                          <span className="text-[#19221C]">{p.name}</span>
-                          <span className="font-bold text-stone-800">{p.share}% ({p.pv.toLocaleString()} PV)</span>
+                      <div key={i} className="space-y-1.5">
+                        <div className="flex justify-between font-semibold">
+                          <span className="text-[#191919]">{p.name}</span>
+                          <span className="font-extrabold text-[#191919] tabular-nums">{p.share}% ({p.pv.toLocaleString()} PV)</span>
                         </div>
-                        <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
-                          <div className={`h-full ${p.color} rounded-full`} style={{ width: `${Math.max(2, p.share)}%` }} />
+                        <div className="w-full h-2.5 bg-[#FBF9E9] border border-[#191919]/15 rounded-md overflow-hidden">
+                          <div className={`h-full ${p.color}`} style={{ width: `${Math.max(2, p.share)}%` }} />
                         </div>
                       </div>
                     ));
@@ -1495,41 +1538,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               {/* Traffic Peak & Behavior */}
-              <div className="bg-white p-6 rounded-3xl border border-[#E0D8C8] shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h3 className="font-bold text-sm text-[#19221C] flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#DF612D]" />
+              <div className="bg-[#FFFDF4] p-5 sm:p-6 rounded-2xl border border-[#191919]/15 space-y-4">
+                <div className="flex items-center justify-between border-b border-[#191919]/10 pb-3">
+                  <h3 className="font-extrabold text-sm text-[#191919] flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#F16B47]" />
                     <span>시간대별 유입 피크 & 접속 환경</span>
                   </h3>
-                  <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-[#191919] font-extrabold flex items-center gap-1.5 bg-[#B9D8E6]/60 px-2.5 py-0.5 rounded-md">
                     실시간 접속 집계 정상
                   </span>
                 </div>
 
                 <div className="space-y-3 text-xs">
-                  <div className="p-3.5 bg-[#FAF7F0] rounded-2xl border border-[#EAE3D4]">
-                    <div className="font-bold text-[#19221C] mb-1 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <div className="p-3.5 bg-[#FBF9E9] rounded-xl border border-[#191919]/15">
+                    <div className="font-extrabold text-[#191919] mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#F16B47]" />
                       <span>저녁 독서 골든타임 (19:00 ~ 23:00)</span>
                     </div>
-                    <p className="text-stone-600 leading-relaxed text-[11px]">
+                    <p className="text-[#191919]/70 leading-relaxed text-[11px]">
                       독서 모임 탐색 및 신청은 주로 퇴근 및 일과 후 저녁 시간대에 집중되며, 방문자 유입이 실시간으로 안전하게 기록되고 있습니다.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                    <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[11px] text-stone-500 block">모바일 접속</span>
-                      <strong className="text-sm font-bold text-[#19221C]">반응형 지원</strong>
+                    <div className="p-3 rounded-xl bg-[#FBF9E9] border border-[#191919]/15">
+                      <span className="text-[11px] text-[#191919]/60 block">모바일 접속</span>
+                      <strong className="text-sm font-extrabold text-[#191919]">반응형 지원</strong>
                     </div>
-                    <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[11px] text-stone-500 block">PC 웹 접속</span>
-                      <strong className="text-sm font-bold text-[#19221C]">데스크톱 최적화</strong>
+                    <div className="p-3 rounded-xl bg-[#FBF9E9] border border-[#191919]/15">
+                      <span className="text-[11px] text-[#191919]/60 block">PC 웹 접속</span>
+                      <strong className="text-sm font-extrabold text-[#191919]">데스크톱 최적화</strong>
                     </div>
-                    <div className="p-3 rounded-2xl bg-stone-50 border border-stone-200">
-                      <span className="text-[11px] text-stone-500 block">데이터 보관</span>
-                      <strong className="text-sm font-bold text-[#19221C]">실시간 영구 집계</strong>
+                    <div className="p-3 rounded-xl bg-[#FBF9E9] border border-[#191919]/15">
+                      <span className="text-[11px] text-[#191919]/60 block">데이터 보관</span>
+                      <strong className="text-sm font-extrabold text-[#191919]">실시간 영구 집계</strong>
                     </div>
                   </div>
                 </div>
@@ -1541,110 +1583,130 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL 1: MEMBER PARTICIPATION HISTORY MODAL (No calgaryYears) */}
       {selectedMemberForDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
           <div 
-            className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-stone-200 overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-[#FBF9E9] w-full max-w-2xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-6 bg-[#172E22] text-white relative">
+            <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
               <button
                 onClick={() => setSelectedMemberForDetail(null)}
-                className="absolute top-5 right-5 text-stone-300 hover:text-white p-1 rounded-full hover:bg-white/10"
+                className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                aria-label="닫기"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 pr-8">
+                <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0">
                   {selectedMemberForDetail.avatar ? (
                     <img
                       src={selectedMemberForDetail.avatar}
                       alt={selectedMemberForDetail.name}
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-xl font-bold">{selectedMemberForDetail.name.charAt(0)}</span>
+                    <span className="text-xl font-extrabold text-[#FFE57E]">{selectedMemberForDetail.name.charAt(0)}</span>
                   )}
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold">{selectedMemberForDetail.name}</h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 font-mono">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-xl font-extrabold text-[#FBF9E9]">{selectedMemberForDetail.name}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-[#FFE57E] text-[#191919] font-extrabold font-mono">
                       @{selectedMemberForDetail.username}
                     </span>
                   </div>
-                  <div className="text-xs text-stone-300 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                    <span>성별: <strong className="text-white">{selectedMemberForDetail.gender || '미입력'}</strong></span>
-                    <span>이메일: <strong className="font-mono text-white">{selectedMemberForDetail.email}</strong></span>
-                    <span>가입일자: <strong className="text-white">{selectedMemberForDetail.createdAt}</strong></span>
+                  <div className="text-xs text-[#FBF9E9]/75 mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                    <span>성별: <strong className="text-[#FBF9E9]">{selectedMemberForDetail.gender || '미입력'}</strong></span>
+                    <span>
+                      연령:{' '}
+                      <strong className="text-[#FBF9E9] tabular-nums">
+                        {(() => {
+                          const age = calculateAgeFromBirthDate(selectedMemberForDetail.birthDate);
+                          return age !== null ? `만 ${age}세` : '미입력';
+                        })()}
+                      </strong>
+                    </span>
+                    <span>
+                      생년월일:{' '}
+                      <strong className="text-[#FBF9E9] tabular-nums">
+                        {selectedMemberForDetail.birthDate
+                          ? formatBirthDateKorean(selectedMemberForDetail.birthDate) ||
+                            selectedMemberForDetail.birthDate
+                          : '미입력'}
+                      </strong>
+                    </span>
+                    <span>이메일: <strong className="font-mono text-[#FBF9E9]">{selectedMemberForDetail.email}</strong></span>
+                    <span>가입일자: <strong className="text-[#FBF9E9] tabular-nums">{selectedMemberForDetail.createdAt}</strong></span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Modal Body: Participation History */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-sm text-[#19221C] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#DF612D]" />
+                <h4 className="font-extrabold text-sm text-[#191919] flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#F16B47]" />
                   <span>그동안 참여 및 신청한 독서모임 히스토리</span>
                 </h4>
-                <span className="text-xs font-semibold text-stone-500">
+                <span className="text-xs font-bold text-[#191919]/65 tabular-nums">
                   총 {getMemberRSVPs(selectedMemberForDetail).length}건
                 </span>
               </div>
 
               {getMemberRSVPs(selectedMemberForDetail).length === 0 ? (
-                <div className="text-center py-12 bg-stone-50 rounded-2xl border border-stone-200">
-                  <p className="text-xs text-stone-500">아직 신청 및 참여한 모임 기록이 없습니다.</p>
+                <div className="text-center py-12 bg-[#FFFDF4] rounded-xl border border-[#191919]/15">
+                  <p className="text-xs text-[#191919]/60 font-semibold">아직 신청 및 참여한 모임 기록이 없습니다.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {getMemberRSVPs(selectedMemberForDetail).map((r) => (
                     <div
                       key={r.id}
-                      className="p-4 rounded-2xl border border-stone-200 bg-[#FCFAF6] hover:border-[#DF612D]/40 transition-colors"
+                      className="p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] hover:border-[#191919]/35 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div>
-                          <span className="text-[10px] font-bold text-[#DF612D] uppercase tracking-wide">
+                          <span className="text-[10px] font-extrabold text-[#F16B47] uppercase tracking-wide tabular-nums">
                             신청일시: {r.registeredAt}
                           </span>
-                          <h5 className="font-bold text-sm text-[#19221C] mt-0.5">
+                          <h5 className="font-extrabold text-sm text-[#191919] mt-0.5">
                             《{r.bookTitle}》 {r.author}
                           </h5>
-                          <p className="text-xs text-stone-600 mt-0.5">{r.clubTitle}</p>
+                          <p className="text-xs text-[#191919]/65 mt-0.5">{r.clubTitle}</p>
                         </div>
 
-                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold shrink-0 ${
                           r.status === 'confirmed'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-[#B9D8E6] text-[#191919]'
+                            : 'bg-[#F16B47]/15 text-[#F16B47]'
                         }`}>
                           {r.status === 'confirmed' ? '참여 확정 (결제 완료)' : '신청 취소됨'}
                         </span>
                       </div>
 
-                      <div className="text-xs text-stone-600 space-y-1 pt-2 border-t border-stone-200/60">
+                      <div className="text-xs text-[#191919]/75 space-y-1 pt-2 border-t border-[#191919]/10">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-3 h-3 text-stone-400" />
-                          <span>모임 일시: <strong>{r.dateTime}</strong></span>
+                          <Calendar className="w-3 h-3 text-[#191919]/45" />
+                          <span className="tabular-nums">모임 일시: <strong>{r.dateTime}</strong></span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-3 h-3 text-stone-400" />
+                          <MapPin className="w-3 h-3 text-[#191919]/45" />
                           <span>장소: {r.venueName}{r.venueAddress ? ` (${r.venueAddress})` : ''}</span>
                         </div>
                         {r.paymentMethod && (
-                          <div className="flex items-center gap-2 text-emerald-700">
-                            <CreditCard className="w-3 h-3 text-emerald-600" />
+                          <div className="flex items-center gap-2 text-[#191919] tabular-nums">
+                            <CreditCard className="w-3 h-3 text-[#F16B47]" />
                             <span>결제 수단: <strong>{r.paymentMethod}</strong> (CAD ${r.paymentAmountCAD || 15})</span>
                           </div>
                         )}
                         {r.userNotes && (
-                          <div className="mt-1.5 p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900">
-                            <span className="font-semibold">작성한 독서 메모: </span>
+                          <div className="mt-1.5 p-2.5 bg-[#FBF9E9] rounded-lg border border-[#191919]/15 text-[11px] text-[#191919]">
+                            <span className="font-extrabold">작성한 독서 메모: </span>
                             {r.userNotes}
                           </div>
                         )}
@@ -1656,10 +1718,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-stone-100 border-t border-stone-200 flex justify-end">
+            <div className="p-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex justify-end">
               <button
                 onClick={() => setSelectedMemberForDetail(null)}
-                className="px-5 py-2 rounded-xl bg-stone-700 hover:bg-stone-800 text-white text-xs font-semibold cursor-pointer"
+                className="px-5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FBF9E9] text-xs font-bold cursor-pointer"
               >
                 닫기
               </button>
@@ -1670,38 +1732,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL 2: CLUB APPLICANTS ROSTER MODAL (Auto-recorded from payment) */}
       {selectedClubForApplicants && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/65 backdrop-blur-xs">
           <div 
-            className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-stone-200 overflow-hidden max-h-[90vh] flex flex-col"
+            className="bg-[#FBF9E9] w-full max-w-3xl rounded-2xl shadow-2xl border border-[#191919]/20 overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-6 bg-[#172E22] text-white relative">
+            <div className="p-5 sm:p-6 bg-[#191919] text-[#FBF9E9] relative border-b border-[#191919]">
               <button
                 onClick={() => setSelectedClubForApplicants(null)}
-                className="absolute top-5 right-5 text-stone-300 hover:text-white p-1 rounded-full hover:bg-white/10"
+                className="absolute top-5 right-5 text-[#FBF9E9]/70 hover:text-[#FBF9E9] p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                aria-label="닫기"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 pr-8">
                 <img
                   src={selectedClubForApplicants.coverImage}
                   alt={selectedClubForApplicants.bookTitle}
-                  className="w-16 h-22 object-cover rounded-xl shadow-xs shrink-0"
+                  referrerPolicy="no-referrer"
+                  className="w-16 h-22 object-cover rounded-lg border border-white/20 shrink-0"
                 />
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#DF612D] text-white">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFE57E] text-[#191919]">
                       {selectedClubForApplicants.category}
                     </span>
-                    <span className="text-xs text-stone-300">
+                    <span className="text-xs text-[#FBF9E9]/75">
                       신청 상태: {selectedClubForApplicants.status === 'open' ? '모집중' : selectedClubForApplicants.status === 'almost_full' ? '마감임박' : '마감'}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold">{selectedClubForApplicants.bookTitle} 신청자 명단</h3>
-                  <p className="text-xs text-stone-300 mt-0.5">{selectedClubForApplicants.title}</p>
-                  <p className="text-[11px] text-stone-400 mt-1">
+                  <h3 className="text-xl font-extrabold text-[#FBF9E9] truncate">{selectedClubForApplicants.bookTitle} 신청자 명단</h3>
+                  <p className="text-xs text-[#FBF9E9]/75 mt-0.5 truncate">{selectedClubForApplicants.title}</p>
+                  <p className="text-[11px] text-[#FBF9E9]/60 mt-1 tabular-nums">
                     {selectedClubForApplicants.dateTime} · {selectedClubForApplicants.venueName}
                   </p>
                 </div>
@@ -1709,23 +1773,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal Body: Applicants List */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
               {/* Notification & Minimum Threshold Banner */}
-              <div className="p-4 rounded-2xl border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF8F5] shadow-xs">
+              <div className="p-4 rounded-xl border border-[#191919]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF4]">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[#19221C]">진행 알림 시스템:</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-extrabold text-[#191919]">진행 알림 시스템:</span>
                     {selectedClubForApplicants.currentSeats >= 4 ? (
-                       <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                        ✅ 최소 인원(4명) 충족 • 진행 확정 알림 발송 완료
+                       <span className="text-xs font-extrabold text-[#191919] bg-[#B9D8E6] px-2.5 py-0.5 rounded-md">
+                        최소 인원(4명) 충족 · 진행 확정 알림 발송 완료
                       </span>
                     ) : (
-                      <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
-                        ⏳ 최소 인원(4명) 모집 중 • 충족 시 자동 알림 발송
+                      <span className="text-xs font-extrabold text-[#191919] bg-[#FFE57E] px-2.5 py-0.5 rounded-md">
+                        최소 인원(4명) 모집 중 · 충족 시 자동 알림 발송
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
+                  <p className="text-[11px] text-[#191919]/70 mt-1 leading-relaxed">
                     {selectedClubForApplicants.currentSeats >= 4
                       ? '최소 인원 4명이 충족되어 모든 신청자(이메일 & SMS)에게 모임 진행 확정 안내가 자동 발송되었습니다.'
                       : '모임 진행 최소 인원은 4명입니다. 4명 충족 시 신청자 전원에게 알림이 발송되며, 미달 취소 시 참가비는 100% 전액 자동 환불됩니다.'}
@@ -1738,57 +1802,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setBroadcastNotice(`'${selectedClubForApplicants.bookTitle}' 신청자 전원에게 진행 확정 안내(이메일 & SMS)를 성공적으로 재발송했습니다.`);
                       setTimeout(() => setBroadcastNotice(null), 3500);
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-[#2D6A4F] hover:bg-[#23533E] text-white text-xs font-bold cursor-pointer shrink-0 transition-colors shadow-xs"
+                    className="px-3.5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FFE57E] text-xs font-extrabold cursor-pointer shrink-0 transition-colors"
                   >
-                    📢 진행 확정 알림 전체 재발송
+                    진행 확정 알림 전체 재발송
                   </button>
                 )}
               </div>
 
               {broadcastNotice && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="p-3 bg-[#B9D8E6]/45 border border-[#191919]/20 text-[#191919] text-xs font-semibold rounded-xl flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#191919] shrink-0" />
                   <span>{broadcastNotice}</span>
                 </div>
               )}
 
               {getClubRSVPs(selectedClubForApplicants.id).length === 0 ? (
-                <div className="text-center py-12 bg-stone-50 rounded-2xl border border-stone-200">
-                  <Users className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-                  <p className="text-xs text-stone-600 font-semibold">아직 이 모임에 신청한 회원이 없습니다.</p>
-                  <p className="text-[11px] text-stone-400 mt-0.5">회원들이 결제를 완료하면 자동으로 여기에 정보가 기록됩니다.</p>
+                <div className="text-center py-12 bg-[#FFFDF4] rounded-xl border border-[#191919]/15">
+                  <Users className="w-8 h-8 text-[#191919]/30 mx-auto mb-2" />
+                  <p className="text-xs text-[#191919]/75 font-bold">아직 이 모임에 신청한 회원이 없습니다.</p>
+                  <p className="text-[11px] text-[#191919]/50 mt-0.5">회원들이 결제를 완료하면 자동으로 여기에 정보가 기록됩니다.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {getClubRSVPs(selectedClubForApplicants.id).map((applicant, idx) => (
                     <div
                       key={applicant.id}
-                      className="p-4 rounded-2xl border border-stone-200 bg-[#FCFAF6] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-4 rounded-xl border border-[#191919]/15 bg-[#FFFDF4] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#DF612D]/10 text-[#DF612D] font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                        <div className="w-8 h-8 rounded-lg bg-[#191919] text-[#FFE57E] font-extrabold flex items-center justify-center text-xs shrink-0 mt-0.5 tabular-nums">
                           {idx + 1}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-[#19221C]">{applicant.participantName}</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            <span className="font-extrabold text-sm text-[#191919]">{applicant.participantName}</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
                               applicant.status === 'confirmed'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-[#B9D8E6] text-[#191919]'
+                                : 'bg-[#F16B47]/15 text-[#F16B47]'
                             }`}>
                               {applicant.status === 'confirmed' ? '결제 및 신청 승인' : '취소됨'}
                             </span>
                           </div>
 
-                          <div className="text-xs text-stone-500 font-mono mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                            <span>📧 {applicant.email}</span>
-                            <span>📞 {applicant.phone}</span>
-                            <span>📅 신청일: {applicant.registeredAt}</span>
+                          <div className="text-xs text-[#191919]/65 font-mono mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                            <span className="inline-flex items-center gap-1">
+                              <Mail className="w-3 h-3" /> {applicant.email}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {applicant.phone}
+                            </span>
+                            <span className="inline-flex items-center gap-1 tabular-nums">
+                              <Clock className="w-3 h-3" /> 신청일: {applicant.registeredAt}
+                            </span>
                           </div>
 
-                          <div className="mt-1.5 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                            <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                          <div className="mt-1.5 inline-flex items-center gap-2 text-xs text-[#191919] bg-[#FBF9E9] px-2.5 py-1 rounded-lg border border-[#191919]/15 tabular-nums">
+                            <CreditCard className="w-3.5 h-3.5 text-[#F16B47]" />
                             <span>
                               결제 수단: <strong>{applicant.paymentMethod || 'Interac e-Transfer'}</strong> (CAD ${applicant.paymentAmountCAD || selectedClubForApplicants.feeCAD})
                             </span>
@@ -1801,14 +1871,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {applicant.status === 'confirmed' ? (
                           <button
                             onClick={() => onUpdateRSVPStatus(applicant.id, 'cancelled')}
-                            className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-red-100 text-stone-600 hover:text-red-700 text-xs font-semibold transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-[#F16B47]/15 hover:bg-[#F16B47] text-[#F16B47] hover:text-white text-xs font-extrabold transition-colors cursor-pointer"
                           >
                             신청 취소 처리
                           </button>
                         ) : (
                           <button
                             onClick={() => onUpdateRSVPStatus(applicant.id, 'confirmed')}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-semibold transition-colors cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg bg-[#B9D8E6] hover:bg-[#9fc8dc] text-[#191919] text-xs font-extrabold transition-colors cursor-pointer"
                           >
                             신청 재승인
                           </button>
@@ -1821,10 +1891,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-stone-100 border-t border-stone-200 flex justify-end">
+            <div className="p-4 bg-[#FFFDF4] border-t border-[#191919]/15 flex justify-end">
               <button
                 onClick={() => setSelectedClubForApplicants(null)}
-                className="px-5 py-2 rounded-xl bg-stone-700 hover:bg-stone-800 text-white text-xs font-semibold cursor-pointer"
+                className="px-5 py-2 rounded-lg bg-[#191919] hover:bg-[#191919]/85 text-[#FBF9E9] text-xs font-bold cursor-pointer"
               >
                 닫기
               </button>

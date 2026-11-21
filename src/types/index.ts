@@ -66,6 +66,7 @@ export interface User {
   email: string;
   phone: string; // 연락처 필수 입력사항
   gender?: '여성' | '남성' | '기타' | string; // 회원 성별 (관리자 확인 가능)
+  birthDate?: string | null; // 생년월일 (YYYY-MM-DD, 기존 회원은 null 가능)
   role: 'admin' | 'host' | 'user';
   createdAt: string; // 언제 가입했는지
   status: 'active' | 'suspended';

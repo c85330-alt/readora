@@ -126,7 +126,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#F4F0E5] border border-[#DDD4C3] text-xs text-[#19221C] focus:outline-none focus:border-[#DF612D] cursor-pointer"
+          className="w-full px-3.5 py-2.5 pr-10 rounded-lg bg-[#FBF9E9] border border-[#191919]/20 text-xs text-[#191919] focus:outline-none focus:border-[#191919] cursor-pointer"
         />
         <button
           type="button"
@@ -134,7 +134,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
             e.stopPropagation();
             setIsOpen(!isOpen);
           }}
-          className="absolute right-2.5 p-1 text-[#DF612D] hover:text-[#c95221] cursor-pointer transition-colors"
+          className="absolute right-2.5 p-1 text-[#F16B47] hover:text-[#191919] cursor-pointer transition-colors"
           title="작은 달력 열기"
           aria-label="달력 열기"
         >
@@ -145,19 +145,19 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
       {/* Mini Calendar Popover */}
       {isOpen && (
         <div
-          className="absolute left-0 top-full mt-1.5 z-50 w-72 bg-white rounded-2xl shadow-xl border border-[#E5DCce] p-3 text-xs animate-in fade-in zoom-in-95 duration-150"
+          className="absolute left-0 top-full mt-1.5 z-50 w-72 bg-[#FFFDF4] rounded-xl shadow-xl border border-[#191919]/20 p-3 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="font-extrabold text-sm text-[#19221C]">
+            <span className="font-extrabold text-sm text-[#191919]">
               {viewYear}년 {viewMonth + 1}월
             </span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-[#FBF9E9] text-[#191919]/70 transition-colors cursor-pointer"
                 title="이전 달"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -165,7 +165,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-[#FBF9E9] text-[#191919]/70 transition-colors cursor-pointer"
                 title="다음 달"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -173,7 +173,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg hover:bg-stone-100 text-stone-400 hover:text-stone-700 ml-1 transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-[#FBF9E9] text-[#191919]/45 hover:text-[#191919] ml-1 transition-colors cursor-pointer"
                 title="닫기"
               >
                 <X className="w-3.5 h-3.5" />
@@ -182,11 +182,11 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
           </div>
 
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] mb-1.5 text-stone-500">
+          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[11px] mb-1.5 text-[#191919]/60">
             {weekdays.map((w, idx) => (
               <span
                 key={w}
-                className={idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-stone-600'}
+                className={idx === 0 ? 'text-[#F16B47]' : idx === 6 ? 'text-[#191919]' : 'text-[#191919]/70'}
               >
                 {w}
               </span>
@@ -194,14 +194,14 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs tabular-nums">
             {/* Previous month trailing days (disabled) */}
             {Array.from({ length: firstDayOfWeek }).map((_, i) => {
               const d = prevMonthDays - firstDayOfWeek + i + 1;
               return (
                 <span
                   key={`prev-${i}`}
-                  className="py-1.5 text-stone-200 select-none text-[11px]"
+                  className="py-1.5 text-[#191919]/15 select-none text-[11px]"
                 >
                   {d}
                 </span>
@@ -220,7 +220,7 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
                 return (
                   <span
                     key={`day-${day}`}
-                    className="py-1.5 text-stone-300 font-normal select-none cursor-not-allowed opacity-50 text-center"
+                    className="py-1.5 text-[#191919]/25 font-normal select-none cursor-not-allowed text-center"
                     title="개설일 기준 최소 7일 후부터 설정 가능합니다"
                   >
                     {day}
@@ -233,13 +233,11 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
                   key={`day-${day}`}
                   type="button"
                   onClick={() => handleSelectDay(day)}
-                  className={`py-1.5 rounded-xl font-semibold transition-all cursor-pointer relative ${
+                  className={`py-1.5 rounded-lg font-bold transition-all cursor-pointer relative ${
                     isSelected
-                      ? 'bg-[#DF612D] text-white shadow-xs font-bold'
-                      : 'hover:bg-stone-100 text-[#19221C]'
-                  } ${dayOfWeek === 0 && !isSelected ? 'text-red-600' : ''} ${
-                    dayOfWeek === 6 && !isSelected ? 'text-blue-600' : ''
-                  }`}
+                      ? 'bg-[#191919] text-[#FFE57E]'
+                      : 'hover:bg-[#FFE57E]/45 text-[#191919]'
+                  } ${dayOfWeek === 0 && !isSelected ? 'text-[#F16B47]' : ''}`}
                 >
                   {day}
                 </button>
@@ -248,11 +246,11 @@ export const MiniDatePicker: React.FC<MiniDatePickerProps> = ({
           </div>
 
           {/* Footer: Replaced 'Today' button with minimum 7 days notice as requested */}
-          <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px]">
-            <span className="text-[#DF612D] font-bold flex items-center gap-1">
+          <div className="mt-2.5 pt-2 border-t border-[#191919]/10 flex items-center justify-between text-[11px]">
+            <span className="text-[#F16B47] font-bold flex items-center gap-1">
               • 개설일 기준 최소 7일 후부터 설정 가능
             </span>
-            <span className="text-stone-400 font-mono text-[10px]">
+            <span className="text-[#191919]/50 font-mono text-[10px]">
               {value || '날짜 미선택'}
             </span>
           </div>

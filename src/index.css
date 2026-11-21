@@ -2,8 +2,14 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-    --font-serif: 'Fraunces', Georgia, serif;
+    --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --font-display: 'Space Grotesk', 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+    --bg-canvas: #FBF9E9;
+    --bg-card: #FFFDF4;
+    --ink-primary: #191919;
+    --accent-yellow: #FFE57E;
+    --accent-orange: #F16B47;
+    --accent-sky: #B9D8E6;
   }
 
   /* Universal text wrapping rules */
@@ -12,15 +18,19 @@
     overflow-wrap: break-word;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   html, body {
     word-break: keep-all;
     overflow-wrap: break-word;
     font-family: var(--font-sans);
-    background-color: #F4F0E5;
-    color: #1A211D;
+    background-color: var(--bg-canvas);
+    color: var(--ink-primary);
   }
 
-  /* Headings: Balance lines for visual harmony */
+  /* Headings: Balance lines for editorial harmony */
   h1, h2, h3, h4, h5, h6 {
     word-break: keep-all;
     text-wrap: balance;
@@ -33,7 +43,15 @@
   }
 }
 
-/* Hanging Indent for Bullet Points and Lists (Text aligns under text, not under bullet) */
+.font-display-en {
+  font-family: var(--font-display);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hanging Indent for Bullet Points and Lists */
 .hanging-indent {
   padding-left: 1.25rem;
   text-indent: -1.25rem;
@@ -55,7 +73,7 @@
   text-wrap: pretty;
 }
 
-/* Flexbox-based Bullet Item: Marker stays fixed, text wraps with clean indentation */
+/* Flexbox-based Bullet Item */
 .bullet-list {
   display: flex;
   flex-direction: column;
@@ -85,7 +103,7 @@
   text-wrap: pretty;
 }
 
-/* Numbered List Item: Digits stay fixed, subsequent lines align perfectly */
+/* Numbered List Item */
 .number-item {
   display: flex;
   align-items: flex-start;
@@ -112,7 +130,6 @@
   text-wrap: pretty;
 }
 
-/* Responsive punctuation-first balanced wrapping utilities */
 .balanced-text {
   text-wrap: balance;
   word-break: keep-all;
@@ -123,30 +140,6 @@
   word-break: keep-all;
 }
 
-.font-serif-accent {
-  font-family: var(--font-serif);
-}
-
-/* Custom curved highlight decoration */
-.sketch-highlight {
-  position: relative;
-  display: inline-block;
-}
-
-.sketch-highlight::after {
-  content: "";
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  bottom: 2px;
-  height: 6px;
-  background-color: currentColor;
-  opacity: 0.22;
-  border-radius: 9999px;
-  z-index: -1;
-  transform: rotate(-0.5deg);
-}
-
 /* Hide scrollbar for smooth horizontal touch navigation */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -155,4 +148,3 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
